@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniRutas — Mapa</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { overflow: hidden; }
+
+    #mapa {
+      position: fixed;
+      inset: 0;
+      bottom: 64px;
+      z-index: 0;
+      height: calc(100vh - 64px);
+      width: 100%;
+    }
+
+    /* Header flotante */
+    .mapa-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 50;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.97) 70%, transparent);
+      pointer-events: none;
+    }
+    .mapa-header > * { pointer-events: auto; }
+
+    .mapa-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .mapa-logo-icon {
+      width: 36px; height: 36px;
+      background: var(--verde);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .mapa-logo-text {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--gris-900);
+    }
+
+    .mapa-busqueda {
+      flex: 1;
+      height: 40px;
+      border: 1.5px solid var(--gris-200);
+      border-radius: 20px;
+      padding: 0 14px;
+      font-size: 0.9rem;
+      background: var(--blanco);
+      color: var(--gris-800);
+      box-shadow: var(--sombra-sm);
+    }
+    .mapa-busqueda:focus {
+      outline: none;
+      border-color: var(--verde);
+    }
+
+    /* Panel de capas */
+    .capas-panel {
+      position: fixed;
+      top: 68px;
+      right: 12px;
+      z-index: 50;
+      background: var(--blanco);
+      border-radius: var(--radio-lg);
+      border: 1px solid var(--gris-200);
+      box-shadow: var(--sombra-md);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 44px;
+    }
+    .capa-btn {
+      width: 40px; height: 40px;
+      border-radius: var(--radio-md);
+      border: 1.5px solid var(--gris-200);
+      background: var(--blanco);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      position: relative;
+    }
+    .capa-btn:hover { background: var(--gris-50); }
+    .capa-btn.active-ciclovias  { background: var(--verde-light);    border-color: var(--verde); }
+    .capa-btn.active-universidades { background: var(--azul-light);  border-color: var(--azul); }
+    .capa-btn.active-pelotones  { background: #fff3e0; border-color: #f59e0b; }
+    .capa-btn.active-reportes   { background: var(--rojo-light);     border-color: var(--rojo); }
+
+    .capa-tooltip {
+      position: absolute;
+      right: 48px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--gris-800);
+      color: var(--blanco);
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .capa-btn:hover .capa-tooltip { opacity: 1; }
+
+    /* Botón SOS */
+    .sos-btn {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: var(--rojo);
+      color: var(--blanco);
+      border: 4px solid var(--blanco);
+      box-shadow: 0 4px 20px rgba(220,38,38,0.45);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .sos-btn:hover { transform: translateX(-50%) scale(1.08); box-shadow: 0 6px 24px rgba(220,38,38,0.55); }
+    .sos-btn:active { transform: translateX(-50%) scale(0.95); }
+
+    /* Botón mi ubicación */
+    .ubicacion-btn {
+      position: fixed;
+      bottom: 148px;
+      right: 16px;
+      z-index: 50;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: var(--blanco);
+      border: 1px solid var(--gris-200);
+      box-shadow: var(--sombra-md);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      color: var(--gris-600);
+      transition: background 0.15s;
+    }
+    .ubicacion-btn:hover { background: var(--gris-50); color: var(--verde); }
+
+    /* Bottom sheet de pelotón / reporte */
+    .bottom-sheet {
+      position: fixed;
+      bottom: 64px; left: 0; right: 0;
+      z-index: 80;
+      background: var(--blanco);
+      border-radius: var(--radio-xl) var(--radio-xl) 0 0;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
+      padding: 12px 20px 24px;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.34,1.1,0.64,1);
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    .bottom-sheet.open { transform: translateY(0); }
+    .sheet-handle {
+      width: 40px; height: 4px;
+      background: var(--gris-200);
+      border-radius: 2px;
+      margin: 0 auto 16px;
+    }
+
+    /* Overlay */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.35);
+      z-index: 75;
+      display: none;
+    }
+    .overlay.visible { display: block; }
+
+    /* SOS overlay */
+    .sos-overlay {
+      position: fixed; inset: 0;
+      background: var(--rojo);
+      z-index: 200;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      text-align: center;
+    }
+    .sos-overlay.visible { display: flex; }
+    .sos-countdown {
+      width: 96px; height: 96px;
+      border-radius: 50%;
+      border: 4px solid rgba(255,255,255,0.4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--blanco);
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .sos-overlay h2 { color: var(--blanco); font-size: 1.5rem; margin-bottom: 8px; }
+    .sos-overlay p  { color: rgba(255,255,255,0.85); margin-bottom: 24px; }
+    .sos-coords     { font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-bottom: 24px; font-family: var(--fuente); }
+
+    /* Leyenda */
+    .leyenda {
+      position: fixed;
+      bottom: 80px;
+      left: 12px;
+      z-index: 50;
+      background: var(--blanco);
+      border-radius: var(--radio-md);
+      border: 1px solid var(--gris-200);
+      padding: 10px 12px;
+      box-shadow: var(--sombra-sm);
+      font-size: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .leyenda-item { display: flex; align-items: center; gap: 6px; color: var(--gris-600); }
+    .leyenda-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Card pelotón en sheet */
+    .peloton-card-sheet { padding: 12px 0; border-bottom: 1px solid var(--gris-100); }
+    .peloton-card-sheet:last-child { border-bottom: none; }
+    .avatar-sm {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--verde-light);
+      color: var(--verde-dark);
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* Leaflet overrides */
+    .leaflet-control-zoom { border-radius: var(--radio-md) !important; border: 1px solid var(--gris-200) !important; box-shadow: var(--sombra-sm) !important; }
+    .leaflet-control-zoom a { border-radius: 0 !important; color: var(--gris-600) !important; }
+  </style>
+</head>
+<body>
+
+<!-- Mapa -->
+<div id="mapa"></div>
+
+<!-- Header -->
+<div class="mapa-header">
+  <a class="mapa-logo" href="index.html">
+    <div class="mapa-logo-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+      </svg>
+    </div>
+    <span class="mapa-logo-text">UniRutas</span>
+  </a>
+  <input class="mapa-busqueda" type="text" id="busqueda" placeholder="Buscar lugar en Bogotá...">
+</div>
+
+<!-- Panel de capas -->
+<div class="capas-panel">
+  <button class="capa-btn active-ciclovias" id="btn-ciclovias" title="Ciclovías">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/>
+      <path d="M15 6a1 1 0 000-2h-3l-3 9H5.5"/><path d="M12 6l-3 9 6.5.5"/>
+    </svg>
+    <span class="capa-tooltip">Ciclovías</span>
+  </button>
+  <button class="capa-btn active-universidades" id="btn-universidades" title="Universidades">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--azul)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+    <span class="capa-tooltip">Universidades</span>
+  </button>
+  <button class="capa-btn active-pelotones" id="btn-pelotones" title="Pelotones">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+    </svg>
+    <span class="capa-tooltip">Pelotones</span>
+  </button>
+  <button class="capa-btn active-reportes" id="btn-reportes" title="Reportes">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--rojo)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <span class="capa-tooltip">Peligros</span>
+  </button>
+</div>
+
+<!-- Leyenda -->
+<div class="leyenda">
+  <div class="leyenda-item"><div class="leyenda-dot" style="background:var(--verde)"></div> Ciclovía</div>
+  <div class="leyenda-item"><div class="leyenda-dot" style="background:var(--azul)"></div> Universidad</div>
+  <div class="leyenda-item"><div class="leyenda-dot" style="background:#f59e0b"></div> Pelotón</div>
+  <div class="leyenda-item"><div class="leyenda-dot" style="background:var(--rojo)"></div> Peligro</div>
+</div>
+
+<!-- Botón mi ubicación -->
+<button class="ubicacion-btn" id="btn-ubicacion" aria-label="Mi ubicación">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+  </svg>
+</button>
+
+<!-- Botón SOS -->
+<button class="sos-btn" id="btn-sos" aria-label="Alerta SOS">SOS</button>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a href="index.html" class="navbar-item active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+    </svg>
+    Mapa
+  </a>
+  <a href="pelotones.html" class="navbar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+    </svg>
+    Pelotones
+  </a>
+  <a href="reportes.html" class="navbar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    Reportes
+  </a>
+  <a href="perfil.html" class="navbar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+    </svg>
+    Perfil
+  </a>
+</nav>
+
+<!-- Overlay genérico -->
+<div class="overlay" id="overlay"></div>
+
+<!-- Bottom sheet: contenido dinámico -->
+<div class="bottom-sheet" id="bottom-sheet">
+  <div class="sheet-handle"></div>
+  <div id="sheet-content"></div>
+</div>
+
+<!-- SOS overlay -->
+<div class="sos-overlay" id="sos-overlay">
+  <div class="sos-countdown" id="sos-num">5</div>
+  <h2>Enviando SOS...</h2>
+  <p>Toca "Cancelar" si fue un error</p>
+  <div class="sos-coords" id="sos-coords">Obteniendo ubicación...</div>
+  <button class="btn btn-secondary" id="btn-cancelar-sos" style="width:auto; padding:0 32px; background:rgba(255,255,255,0.2); color:white; border-color:rgba(255,255,255,0.4)">
+    Cancelar
+  </button>
+</div>
+
+<!-- SOS enviado overlay -->
+<div class="sos-overlay" id="sos-enviado" style="display:none">
+  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:16px">
+    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.01 1.18 2 2 0 012 .01h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/>
+  </svg>
+  <h2 style="color:white; margin-bottom:8px">SOS enviado</h2>
+  <p style="color:rgba(255,255,255,0.85); margin-bottom:4px">Tu ubicación fue compartida</p>
+  <div class="sos-coords" id="sos-coords-final"></div>
+  <p style="color:rgba(255,255,255,0.85); margin: 16px 0; font-size:0.9rem">Quédate en tu lugar.<br>Alguien está en camino.</p>
+  <button class="btn btn-secondary" id="btn-bien" style="width:auto; padding:0 32px; background:rgba(255,255,255,0.2); color:white; border-color:rgba(255,255,255,0.4)">
+    Ya estoy bien
+  </button>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+  import { auth, db } from './firebase.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import {
+    collection, onSnapshot, query, orderBy, limit
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { showToast } from './toast.js';
+
+  // Guard de sesión
+  onAuthStateChanged(auth, (user) => {
+    if (!user) window.location.href = 'login.html';
+  });
+
+  // ============================================
+  // MAPA
+  // ============================================
+  const BOGOTA = [4.7110, -74.0721];
+  const mapa = L.map('mapa', { zoomControl: true, attributionControl: false }).setView(BOGOTA, 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(mapa);
+
+  // Force map size recalculation
+  setTimeout(() => {
+    mapa.invalidateSize();
+  }, 300);
+
+  // Grupos de capas
+  const capas = {
+    ciclovias:     L.layerGroup().addTo(mapa),
+    universidades: L.layerGroup().addTo(mapa),
+    pelotones:     L.layerGroup().addTo(mapa),
+    reportes:      L.layerGroup().addTo(mapa)
+  };
+  const capasActivas = { ciclovias: true, universidades: true, pelotones: true, reportes: true };
+
+  // ============================================
+  // CICLOVÍAS DE BOGOTÁ (coordenadas reales)
+  // ============================================
+  const ciclovias = [
+    {
+      nombre: "Ciclovía Carrera 7",
+      coords: [[4.6590,-74.0563],[4.6700,-74.0563],[4.6900,-74.0553],[4.7100,-74.0540],[4.7300,-74.0530]]
+    },
+    {
+      nombre: "Ciclovía Avenida El Dorado (Calle 26)",
+      coords: [[4.6560,-74.1050],[4.6558,-74.0900],[4.6555,-74.0750],[4.6553,-74.0600],[4.6550,-74.0500]]
+    },
+    {
+      nombre: "Ciclovía Calle 100",
+      coords: [[4.6860,-74.0900],[4.6862,-74.0750],[4.6864,-74.0600],[4.6866,-74.0450]]
+    },
+    {
+      nombre: "Ciclovía Av. NQS",
+      coords: [[4.6350,-74.0910],[4.6500,-74.0905],[4.6700,-74.0900],[4.6900,-74.0895]]
+    },
+    {
+      nombre: "Ciclovía Eje Ambiental (Av. Jiménez)",
+      coords: [[4.6015,-74.0750],[4.6015,-74.0700],[4.6013,-74.0650],[4.6012,-74.0600]]
+    },
+    {
+      nombre: "Ciclovía Av. Suba",
+      coords: [[4.7200,-74.0850],[4.7220,-74.0750],[4.7240,-74.0650],[4.7260,-74.0550]]
+    }
+  ];
+
+  ciclovias.forEach(c => {
+    L.polyline(c.coords, {
+      color: '#1d9e75',
+      weight: 4,
+      opacity: 0.8,
+      dashArray: null
+    }).bindPopup(`
+      <div style="font-family:Inter,sans-serif; padding:4px">
+        <strong style="color:#0f6e56">${c.nombre}</strong><br>
+        <span style="font-size:12px; color:#6b7280">Ciclovía oficial</span>
+      </div>
+    `).addTo(capas.ciclovias);
+  });
+
+  // ============================================
+  // UNIVERSIDADES DE BOGOTÁ
+  // ============================================
+  const universidades = [
+    { nombre: "Universidad Nacional de Colombia", lat: 4.6359, lng: -74.0839, color: '#2563eb' },
+    { nombre: "Universidad de los Andes",         lat: 4.6016, lng: -74.0660, color: '#2563eb' },
+    { nombre: "Universidad Javeriana",            lat: 4.6280, lng: -74.0643, color: '#2563eb' },
+    { nombre: "Universidad Distrital",            lat: 4.6354, lng: -74.0830, color: '#2563eb' },
+    { nombre: "Universidad del Rosario",          lat: 4.6010, lng: -74.0720, color: '#2563eb' },
+    { nombre: "SENA - Distrito Capital",          lat: 4.6576, lng: -74.0920, color: '#2563eb' },
+    { nombre: "Universidad EAN",                  lat: 4.6530, lng: -74.0580, color: '#2563eb' },
+    { nombre: "Universidad Pedagógica Nacional",  lat: 4.6690, lng: -74.0920, color: '#2563eb' },
+    { nombre: "Univ. Santo Tomás",                lat: 4.6350, lng: -74.0830, color: '#2563eb' },
+    { nombre: "Universidad La Salle",             lat: 4.6280, lng: -74.0840, color: '#2563eb' }
+  ];
+
+  const iconoUni = L.divIcon({
+    html: `<div style="width:32px;height:32px;background:#2563eb;border-radius:8px;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.2)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+    </div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    className: ''
+  });
+
+  universidades.forEach(u => {
+    L.marker([u.lat, u.lng], { icon: iconoUni })
+      .bindPopup(`
+        <div style="font-family:Inter,sans-serif; padding:4px">
+          <strong style="color:#1e40af">${u.nombre}</strong><br>
+          <span style="font-size:12px; color:#6b7280">Zona universitaria</span>
+        </div>
+      `)
+      .addTo(capas.universidades);
+
+    // Perímetro como círculo semitransparente
+    L.circle([u.lat, u.lng], {
+      radius: 400,
+      color: '#2563eb',
+      fillColor: '#3b82f6',
+      fillOpacity: 0.08,
+      weight: 1.5,
+      dashArray: '6 4'
+    }).addTo(capas.universidades);
+  });
+
+  // ============================================
+  // PELOTONES — Firestore en tiempo real
+  // ============================================
+  const iconoPeloton = (nombre) => L.divIcon({
+    html: `<div style="background:#f59e0b;color:white;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600;white-space:nowrap;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.2);font-family:Inter,sans-serif">${nombre}</div>`,
+    className: '',
+    iconAnchor: [40, 16]
+  });
+
+  const marcadoresPelotones = {};
+
+  const qPelotones = query(collection(db, 'pelotones'), orderBy('createdAt', 'desc'), limit(30));
+  onSnapshot(qPelotones, (snap) => {
+    // Limpiar marcadores viejos
+    Object.values(marcadoresPelotones).forEach(m => capas.pelotones.removeLayer(m));
+
+    snap.docs.forEach(docSnap => {
+      const p = docSnap.data();
+      if (!p.lat || !p.lng) return;
+
+      const marker = L.marker([p.lat, p.lng], { icon: iconoPeloton(p.liderNombre || 'Pelotón') });
+      marker.bindPopup(popupPeloton(docSnap.id, p));
+      marker.addTo(capas.pelotones);
+      marcadoresPelotones[docSnap.id] = marker;
+    });
+  });
+
+  function popupPeloton(id, p) {
+    const vehiculoLabel = { bicicleta: '🚲 Bicicleta', patineta: '⚡ Patineta', pie: '🚶 A pie' }[p.vehiculo] || p.vehiculo;
+    return `
+      <div style="font-family:Inter,sans-serif; min-width:200px; padding:4px">
+        <div style="font-weight:600; color:#92400e; margin-bottom:4px">${p.origen || ''} → ${p.destino || ''}</div>
+        <div style="font-size:12px; color:#6b7280; margin-bottom:8px">${vehiculoLabel} · ${p.horaSalida || ''} · ${(p.participantes||[]).length}/${p.cupoMax || '?'}</div>
+        <a href="pelotones.html" style="display:inline-block; background:#f59e0b; color:white; border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600; text-decoration:none">Ver pelotones</a>
+      </div>
+    `;
+  }
+
+  // ============================================
+  // REPORTES — Firestore en tiempo real
+  // ============================================
+  const iconosReporte = {
+    hueco:      { color: '#92400e', emoji: '🕳️', label: 'Hueco' },
+    inundacion: { color: '#1e40af', emoji: '🌊', label: 'Inundación' },
+    sospechoso: { color: '#7c3aed', emoji: '👤', label: 'Sospechoso' },
+    otro:       { color: '#dc2626', emoji: '⚠️', label: 'Peligro' }
+  };
+
+  const marcadoresReportes = {};
+
+  const qReportes = query(collection(db, 'reportes'), orderBy('createdAt', 'desc'), limit(50));
+  onSnapshot(qReportes, (snap) => {
+    Object.values(marcadoresReportes).forEach(m => capas.reportes.removeLayer(m));
+
+    snap.docs.forEach(docSnap => {
+      const r = docSnap.data();
+      if (!r.lat || !r.lng) return;
+      const info = iconosReporte[r.tipo] || iconosReporte.otro;
+
+      const iconoR = L.divIcon({
+        html: `<div style="width:32px;height:32px;background:${info.color};border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.25);font-size:14px">${info.emoji}</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        className: ''
+      });
+
+      const fecha = r.createdAt?.toDate?.()?.toLocaleDateString('es-CO') || '';
+      const marker = L.marker([r.lat, r.lng], { icon: iconoR })
+        .bindPopup(`
+          <div style="font-family:Inter,sans-serif; padding:4px">
+            <strong style="color:${info.color}">${info.label}</strong><br>
+            <span style="font-size:12px; color:#6b7280">${r.descripcion || 'Sin descripción'}</span><br>
+            <span style="font-size:11px; color:#9ca3af">${fecha}</span>
+          </div>
+        `);
+      marker.addTo(capas.reportes);
+      marcadoresReportes[docSnap.id] = marker;
+    });
+  });
+
+  // ============================================
+  // TOGGLE CAPAS
+  // ============================================
+  function toggleCapa(nombre) {
+    const btn = document.getElementById(`btn-${nombre}`);
+    if (capasActivas[nombre]) {
+      mapa.removeLayer(capas[nombre]);
+      capasActivas[nombre] = false;
+      btn.style.opacity = '0.4';
+    } else {
+      mapa.addLayer(capas[nombre]);
+      capasActivas[nombre] = true;
+      btn.style.opacity = '1';
+    }
+  }
+
+  // ============================================
+  // MI UBICACIÓN
+  // ============================================
+  let marcadorUsuario = null;
+  function centrarUbicacion() {
+    if (!navigator.geolocation) { showToast('Tu navegador no soporta geolocalización', 'warning'); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        mapa.setView([lat, lng], 16);
+        if (marcadorUsuario) mapa.removeLayer(marcadorUsuario);
+        marcadorUsuario = L.marker([lat, lng], {
+          icon: L.divIcon({
+            html: `<div style="width:16px;height:16px;background:#2563eb;border-radius:50%;border:3px solid white;box-shadow:0 0 0 4px rgba(37,99,235,0.25)"></div>`,
+            iconSize: [16, 16], iconAnchor: [8, 8], className: ''
+          })
+        }).addTo(mapa);
+      },
+      () => showToast('No se pudo obtener tu ubicación', 'warning')
+    );
+  }
+
+  // ============================================
+  // BÚSQUEDA
+  // ============================================
+  let busquedaTimer = null;
+  let sugerenciasEl = null;
+
+  const inputBusqueda = document.getElementById('busqueda');
+
+  // Crear contenedor de sugerencias
+  const sugerenciasContainer = document.createElement('div');
+  sugerenciasContainer.id = 'sugerencias';
+  sugerenciasContainer.style.cssText = `
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--gris-200);
+    box-shadow: var(--sombra-md);
+    max-height: 280px;
+    overflow-y: auto;
+    display: none;
+    z-index: 100;
+    margin-top: 6px;
+  `;
+  inputBusqueda.parentElement.style.position = 'relative';
+  inputBusqueda.parentElement.appendChild(sugerenciasContainer);
+
+  inputBusqueda.addEventListener('input', (e) => {
+    clearTimeout(busquedaTimer);
+    const q = e.target.value.trim();
+    if (q.length < 2) { sugerenciasContainer.style.display = 'none'; return; }
+
+    busquedaTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q + ', Bogotá, Colombia')}&format=json&limit=8&addressdetails=1`,
+          { headers: { 'Accept-Language': 'es' } }
+        );
+        const data = await res.json();
+        if (!data.length) { sugerenciasContainer.style.display = 'none'; return; }
+
+        sugerenciasContainer.innerHTML = data.map((item, i) => {
+          const nombre = item.display_name.split(',')[0];
+          const detalle = item.display_name.split(',').slice(1, 3).join(',').trim();
+          const tipo = item.type || item.class || '';
+          const icono = getIconoBusqueda(item.class, item.type);
+          return `
+            <div class="sug-item" data-lat="${item.lat}" data-lng="${item.lon}" data-nombre="${nombre}"
+              style="display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer; border-bottom: 1px solid var(--gris-100); font-family:var(--fuente)">
+              <span style="font-size:18px; width:24px; text-align:center">${icono}</span>
+              <div>
+                <div style="font-size:14px; font-weight:500; color:var(--gris-900)">${nombre}</div>
+                <div style="font-size:12px; color:var(--gris-400)">${detalle}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        sugerenciasContainer.style.display = 'block';
+
+        // Click en sugerencia
+        sugerenciasContainer.querySelectorAll('.sug-item').forEach(el => {
+          el.addEventListener('click', () => {
+            const lat = parseFloat(el.dataset.lat);
+            const lng = parseFloat(el.dataset.lng);
+            const nombre = el.dataset.nombre;
+            mapa.setView([lat, lng], 17);
+            inputBusqueda.value = nombre;
+            sugerenciasContainer.style.display = 'none';
+
+            // Marcador temporal
+            if (window._marcadorBusqueda) mapa.removeLayer(window._marcadorBusqueda);
+            window._marcadorBusqueda = L.marker([lat, lng], {
+              icon: L.divIcon({
+                html: `<div style="background:var(--verde);color:white;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600;white-space:nowrap;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.2);font-family:Inter,sans-serif">${nombre}</div>`,
+                className: '', iconAnchor: [40, 16]
+              })
+            }).addTo(mapa);
+          });
+
+          el.addEventListener('mouseenter', () => el.style.background = 'var(--gris-50)');
+          el.addEventListener('mouseleave', () => el.style.background = 'white');
+        });
+
+      } catch { sugerenciasContainer.style.display = 'none'; }
+    }, 400);
+  });
+
+  // Cerrar sugerencias al hacer click fuera
+  document.addEventListener('click', (e) => {
+    if (!inputBusqueda.contains(e.target) && !sugerenciasContainer.contains(e.target)) {
+      sugerenciasContainer.style.display = 'none';
+    }
+  });
+
+  // Íconos según tipo de lugar
+  function getIconoBusqueda(clase, tipo) {
+    const mapa_iconos = {
+      amenity: {
+        restaurant: '🍽️', cafe: '☕', bar: '🍺', fast_food: '🍔',
+        university: '🏛️', school: '🏫', college: '🎓',
+        hospital: '🏥', pharmacy: '💊', clinic: '🏥',
+        supermarket: '🛒', convenience: '🏪',
+        bank: '🏦', atm: '💳',
+        fuel: '⛽', parking: '🅿️',
+        bus_station: '🚌', taxi: '🚕',
+        gym: '💪', sports_centre: '⚽',
+        cinema: '🎬', theatre: '🎭',
+        library: '📚', place_of_worship: '⛪',
+        police: '👮', fire_station: '🚒',
+        default: '📍'
+      },
+      shop: {
+        clothes: '👕', shoes: '👟', electronics: '📱',
+        bakery: '🥖', butcher: '🥩',
+        default: '🛍️'
+      },
+      leisure: { park: '🌳', playground: '🎠', default: '🌿' },
+      tourism: { hotel: '🏨', museum: '🏛️', default: '🗺️' },
+      highway: { default: '🛣️' },
+      building: { default: '🏢' },
+      default: '📍'
+    };
+
+    const claseObj = mapa_iconos[clase];
+    if (!claseObj) return mapa_iconos.default;
+    return claseObj[tipo] || claseObj.default || mapa_iconos.default;
+  }
+
+  // ============================================
+  // RUTEO EN BICICLETA
+  // ============================================
+  let rutaActual = null;
+  let marcadorOrigen = null;
+  let marcadorDestino = null;
+  let puntoOrigen = null;
+  let puntoDestino = null;
+
+  // Detectar si es domingo
+  function esDomingo() {
+    return new Date().getDay() === 0;
+  }
+
+  // Modificar el click de sugerencia para soportar dos pasos (origen → destino)
+  inputBusqueda.addEventListener('input', (e) => {
+    clearTimeout(busquedaTimer);
+    const q = e.target.value.trim();
+    if (q.length < 2) { sugerenciasContainer.style.display = 'none'; return; }
+
+    busquedaTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q + ', Bogotá, Colombia')}&format=json&limit=8&addressdetails=1`,
+          { headers: { 'Accept-Language': 'es' } }
+        );
+        const data = await res.json();
+        if (!data.length) { sugerenciasContainer.style.display = 'none'; return; }
+
+        sugerenciasContainer.innerHTML = data.map((item, i) => {
+          const nombre = item.display_name.split(',')[0];
+          const detalle = item.display_name.split(',').slice(1, 3).join(',').trim();
+          const tipo = item.type || item.class || '';
+          const icono = getIconoBusqueda(item.class, item.type);
+          return `
+            <div class="sug-item" data-lat="${item.lat}" data-lng="${item.lon}" data-nombre="${nombre}"
+              style="display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer; border-bottom: 1px solid var(--gris-100); font-family:var(--fuente)">
+              <span style="font-size:18px; width:24px; text-align:center">${icono}</span>
+              <div>
+                <div style="font-size:14px; font-weight:500; color:var(--gris-900)">${nombre}</div>
+                <div style="font-size:12px; color:var(--gris-400)">${detalle}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        sugerenciasContainer.style.display = 'block';
+
+        // Click en sugerencia - modificado para routing
+        sugerenciasContainer.querySelectorAll('.sug-item').forEach(el => {
+          el.addEventListener('click', () => {
+            const lat = parseFloat(el.dataset.lat);
+            const lng = parseFloat(el.dataset.lng);
+            const nombre = el.dataset.nombre;
+            sugerenciasContainer.style.display = 'none';
+
+            if (!puntoOrigen) {
+              // Primer click = origen
+              puntoOrigen = [lat, lng];
+              inputBusqueda.value = '';
+              inputBusqueda.placeholder = 'Busca tu destino...';
+
+              if (marcadorOrigen) mapa.removeLayer(marcadorOrigen);
+              marcadorOrigen = L.marker([lat, lng], {
+                icon: L.divIcon({
+                  html: `<div style="background:var(--verde);color:white;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;white-space:nowrap;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.2);font-family:Inter,sans-serif">
+                    📍 ${nombre}
+                  </div>`,
+                  className: '', iconAnchor: [50, 16]
+                })
+              }).addTo(mapa);
+
+              showToast('Origen seleccionado. Busca tu destino', 'info');
+
+            } else {
+              // Segundo click = destino → trazar ruta
+              puntoDestino = [lat, lng];
+              inputBusqueda.value = '';
+              inputBusqueda.placeholder = 'Buscar lugar en Bogotá...';
+
+              if (marcadorDestino) mapa.removeLayer(marcadorDestino);
+              marcadorDestino = L.marker([lat, lng], {
+                icon: L.divIcon({
+                  html: `<div style="background:#2563eb;color:white;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;white-space:nowrap;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.2);font-family:Inter,sans-serif">
+                    🏁 ${nombre}
+                  </div>`,
+                  className: '', iconAnchor: [50, 16]
+                })
+              }).addTo(mapa);
+
+              trazarRuta(puntoOrigen, puntoDestino);
+            }
+          });
+
+          el.addEventListener('mouseenter', () => el.style.background = 'var(--gris-50)');
+          el.addEventListener('mouseleave', () => el.style.background = 'white');
+        });
+
+      } catch { sugerenciasContainer.style.display = 'none'; }
+    }, 400);
+  });
+
+  // Trazar ruta con OSRM
+  async function trazarRuta(origen, destino) {
+    try {
+      showToast('Calculando ruta en bicicleta...', 'info');
+
+      // OSRM perfil bicicleta
+      const url = `https://router.project-osrm.org/route/v1/bike/${origen[1]},${origen[0]};${destino[1]},${destino[0]}?overview=full&geometries=geojson&steps=true`;
+      const res  = await fetch(url);
+      const data = await res.json();
+
+      if (data.code !== 'Ok') { showToast('No se encontró ruta', 'warning'); return; }
+
+      const ruta   = data.routes[0];
+      const coords = ruta.geometry.coordinates.map(c => [c[1], c[0]]);
+      const distKm = (ruta.distance / 1000).toFixed(1);
+      const minutos = Math.round(ruta.duration / 60);
+
+      // Quitar ruta anterior
+      if (rutaActual) mapa.removeLayer(rutaActual);
+
+      // Color y estilo según día
+      const domingo = esDomingo();
+      const colorRuta  = domingo ? '#1d9e75' : '#2563eb';
+      const labelTipo  = domingo ? '🚴 Ciclovía dominical' : '🛣️ Cicloruta entre semana';
+      const dashArray  = domingo ? null : '8 4';
+
+      // Dibujar ruta
+      rutaActual = L.polyline(coords, {
+        color: colorRuta,
+        weight: 5,
+        opacity: 0.85,
+        dashArray,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(mapa);
+
+      mapa.fitBounds(rutaActual.getBounds(), { padding: [60, 60] });
+
+      // Panel de info de ruta
+      mostrarInfoRuta(labelTipo, distKm, minutos, domingo, ruta.legs[0].steps);
+
+    } catch (err) {
+      console.error(err);
+      showToast('Error al calcular la ruta', 'danger');
+    }
+  }
+
+  // Panel flotante con info de la ruta
+  function mostrarInfoRuta(tipo, distKm, minutos, domingo, pasos) {
+    // Quitar panel anterior
+    document.getElementById('panel-ruta')?.remove();
+
+    const panel = document.createElement('div');
+    panel.id = 'panel-ruta';
+    panel.style.cssText = `
+      position: fixed;
+      bottom: 80px; left: 12px; right: 12px;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid var(--gris-200);
+      box-shadow: var(--sombra-md);
+      padding: 16px;
+      z-index: 60;
+      font-family: var(--fuente);
+    `;
+
+    const instrucciones = pasos.slice(0, 4).map(p => {
+      const dir = traducirDireccion(p.maneuver?.type, p.maneuver?.modifier);
+      const calle = p.name || 'calle sin nombre';
+      const dist = p.distance > 1000
+        ? `${(p.distance/1000).toFixed(1)} km` 
+        : `${Math.round(p.distance)} m`;
+      return `<div style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-bottom:1px solid var(--gris-100);font-size:13px;color:var(--gris-600)">
+        <span style="font-size:16px;flex-shrink:0">${dir.icono}</span>
+        <span>${dir.texto} por <strong style="color:var(--gris-800)">${calle}</strong> — ${dist}</span>
+      </div>`;
+    }).join('');
+
+    panel.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div style="font-size:13px;color:var(--gris-400);margin-bottom:2px">${tipo}</div>
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span style="font-size:22px;font-weight:700;color:var(--gris-900)">${minutos} min</span>
+            <span style="font-size:14px;color:var(--gris-400)">${distKm} km</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="limpiarRuta()" style="padding:6px 12px;border-radius:8px;border:1px solid var(--gris-200);background:white;font-size:13px;cursor:pointer;color:var(--gris-600)">
+            Limpiar
+          </button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button onclick="cambiarModoRuta('bike')" id="modo-bike"
+          style="flex:1;padding:6px;border-radius:8px;border:2px solid var(--verde);background:var(--verde-light);font-size:12px;font-weight:600;cursor:pointer;color:var(--verde-dark)">
+          🚴 Bicicleta
+        </button>
+        <button onclick="cambiarModoRuta('foot')" id="modo-foot"
+          style="flex:1;padding:6px;border-radius:8px;border:1.5px solid var(--gris-200);background:white;font-size:12px;font-weight:500;cursor:pointer;color:var(--gris-600)">
+          🚶 A pie
+        </button>
+      </div>
+      <div style="font-size:12px;font-weight:500;color:var(--gris-600);margin-bottom:6px">Instrucciones</div>
+      ${instrucciones}
+      ${pasos.length > 4 ? `<div style="font-size:12px;color:var(--gris-400);margin-top:6px">+${pasos.length - 4} pasos más</div>` : ''}
+    `;
+
+    document.body.appendChild(panel);
+  }
+
+  // Cambiar modo de transporte
+  window.cambiarModoRuta = async function(modo) {
+    if (!puntoOrigen || !puntoDestino) return;
+
+    document.getElementById('modo-bike').style.border = modo === 'bike' ? '2px solid var(--verde)' : '1.5px solid var(--gris-200)';
+    document.getElementById('modo-bike').style.background = modo === 'bike' ? 'var(--verde-light)' : 'white';
+    document.getElementById('modo-foot').style.border = modo === 'foot' ? '2px solid var(--verde)' : '1.5px solid var(--gris-200)';
+    document.getElementById('modo-foot').style.background = modo === 'foot' ? 'var(--verde-light)' : 'white';
+
+    const url = `https://router.project-osrm.org/route/v1/${modo}/${puntoOrigen[1]},${puntoOrigen[0]};${puntoDestino[1]},${puntoDestino[0]}?overview=full&geometries=geojson&steps=true`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.code !== 'Ok') return;
+
+    const ruta   = data.routes[0];
+    const coords = ruta.geometry.coordinates.map(c => [c[1], c[0]]);
+    const distKm = (ruta.distance / 1000).toFixed(1);
+    const minutos = Math.round(ruta.duration / 60);
+
+    if (rutaActual) mapa.removeLayer(rutaActual);
+    rutaActual = L.polyline(coords, {
+      color: modo === 'bike' ? '#1d9e75' : '#f59e0b',
+      weight: 5,
+      opacity: 0.85,
+      dashArray: modo === 'foot' ? '4 4' : null,
+      lineCap: 'round'
+    }).addTo(mapa);
+
+    mapa.fitBounds(rutaActual.getBounds(), { padding: [60, 60] });
+
+    const label = modo === 'bike'
+      ? (esDomingo() ? '🚴 Ciclovía dominical' : '🛣️ Cicloruta entre semana')
+      : '🚶 Ruta a pie';
+
+    mostrarInfoRuta(label, distKm, minutos, esDomingo(), ruta.legs[0].steps);
+  };
+
+  // Limpiar ruta
+  window.limpiarRuta = function() {
+    if (rutaActual)     { mapa.removeLayer(rutaActual);     rutaActual = null; }
+    if (marcadorOrigen) { mapa.removeLayer(marcadorOrigen); marcadorOrigen = null; }
+    if (marcadorDestino){ mapa.removeLayer(marcadorDestino); marcadorDestino = null; }
+    puntoOrigen = null;
+    puntoDestino = null;
+    document.getElementById('panel-ruta')?.remove();
+    inputBusqueda.placeholder = 'Buscar lugar en Bogotá...';
+    showToast('Ruta eliminada', 'info');
+  };
+
+  // Traducir instrucciones de OSRM al español
+  function traducirDireccion(tipo, modificador) {
+    const map = {
+      'turn-left':           { icono: '↰', texto: 'Gira a la izquierda' },
+      'turn-right':          { icono: '↱', texto: 'Gira a la derecha' },
+      'turn-slight left':    { icono: '↖', texto: 'Leve izquierda' },
+      'turn-slight right':   { icono: '↗', texto: 'Leve derecha' },
+      'turn-sharp left':     { icono: '⬅', texto: 'Giro brusco izquierda' },
+      'turn-sharp right':    { icono: '➡', texto: 'Giro brusco derecha' },
+      'continue-straight':   { icono: '⬆', texto: 'Continúa recto' },
+      'depart-':             { icono: '🟢', texto: 'Empieza' },
+      'arrive-':             { icono: '🏁', texto: 'Llegaste' },
+      'roundabout-':         { icono: '🔄', texto: 'Toma la rotonda' },
+      'default':             { icono: '➡', texto: 'Continúa' }
+    };
+    const key = `${tipo}-${modificador || ''}`;
+    return map[key] || map[`${tipo}-`] || map['default'];
+  }
+
+  // ============================================
+  // BOTTOM SHEET
+  // ============================================
+  function cerrarSheet() {
+    document.getElementById('bottom-sheet').classList.remove('open');
+    document.getElementById('overlay').classList.remove('visible');
+  }
+
+  // ============================================
+  // SOS
+  // ============================================
+  let sosTimer = null;
+  let sosSegundos = 5;
+  let sosLat = null, sosLng = null;
+
+  function iniciarSOS() {
+    sosSegundos = 5;
+    document.getElementById('sos-num').textContent = sosSegundos;
+    document.getElementById('sos-overlay').classList.add('visible');
+    document.getElementById('sos-coords').textContent = 'Obteniendo ubicación...';
+
+    // Obtener ubicación
+    navigator.geolocation?.getCurrentPosition((pos) => {
+      sosLat = pos.coords.latitude.toFixed(5);
+      sosLng = pos.coords.longitude.toFixed(5);
+      document.getElementById('sos-coords').textContent = `${sosLat}, ${sosLng}`;
+    });
+
+    sosTimer = setInterval(() => {
+      sosSegundos--;
+      document.getElementById('sos-num').textContent = sosSegundos;
+      if (sosSegundos <= 0) {
+        clearInterval(sosTimer);
+        enviarSOS();
+      }
+    }, 1000);
+  }
+
+  function cancelarSOS() {
+    clearInterval(sosTimer);
+    document.getElementById('sos-overlay').classList.remove('visible');
+    showToast('SOS cancelado', 'info');
+  }
+
+  function enviarSOS() {
+    document.getElementById('sos-overlay').classList.remove('visible');
+    const enviado = document.getElementById('sos-enviado');
+    enviado.style.display = 'flex';
+    document.getElementById('sos-coords-final').textContent =
+      sosLat ? `Ubicación: ${sosLat}, ${sosLng}` : 'Ubicación no disponible';
+  }
+
+  function cerrarSOSEnviado() {
+    document.getElementById('sos-enviado').style.display = 'none';
+    showToast('Alerta cancelada. ¡Qué bueno que estés bien!', 'success');
+  }
+
+  // Event listeners for buttons
+  document.getElementById('btn-ciclovias').addEventListener('click', () => toggleCapa('ciclovias'));
+  document.getElementById('btn-universidades').addEventListener('click', () => toggleCapa('universidades'));
+  document.getElementById('btn-pelotones').addEventListener('click', () => toggleCapa('pelotones'));
+  document.getElementById('btn-reportes').addEventListener('click', () => toggleCapa('reportes'));
+  document.getElementById('btn-ubicacion').addEventListener('click', centrarUbicacion);
+  document.getElementById('btn-sos').addEventListener('click', iniciarSOS);
+  document.getElementById('btn-cancelar-sos').addEventListener('click', cancelarSOS);
+  document.getElementById('btn-bien').addEventListener('click', cerrarSOSEnviado);
+  document.getElementById('overlay').addEventListener('click', cerrarSheet);
+
+</script>
+
+</body>
+</html>

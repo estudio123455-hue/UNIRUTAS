@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniRutas — Pelotones</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: var(--gris-50);
+      padding-bottom: 80px;
+    }
+
+    /* Header */
+    .page-header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: var(--blanco);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--gris-200);
+    }
+    .page-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--gris-900);
+    }
+    .btn-add {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--verde);
+      color: var(--blanco);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.15s;
+    }
+    .btn-add:hover {
+      transform: scale(1.05);
+      background: var(--verde-dark);
+    }
+
+    /* Filtros horizontales */
+    .filtros-container {
+      position: sticky;
+      top: 73px;
+      z-index: 30;
+      background: var(--blanco);
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--gris-200);
+    }
+    .filtros-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .filtros-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    .filtro-btn {
+      flex-shrink: 0;
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1.5px solid var(--gris-200);
+      background: var(--blanco);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gris-700);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .filtro-btn:hover {
+      background: var(--gris-50);
+    }
+    .filtro-btn.active {
+      background: var(--verde);
+      border-color: var(--verde);
+      color: var(--blanco);
+    }
+
+    /* Lista de pelotones */
+    .pelotones-list {
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .peloton-card {
+      background: var(--blanco);
+      border-radius: var(--radio-lg);
+      border: 1px solid var(--gris-200);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: var(--sombra-sm);
+    }
+    .peloton-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--verde-light);
+      color: var(--verde-dark);
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .peloton-info {
+      flex: 1;
+    }
+    .lider-nombre {
+      font-weight: 600;
+      color: var(--gris-900);
+      font-size: 0.95rem;
+    }
+    .vehiculo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      margin-top: 4px;
+    }
+    .vehiculo-badge.bicicleta { background: #dbeafe; color: #1e40af; }
+    .vehiculo-badge.patineta { background: #fef3c7; color: #92400e; }
+    .vehiculo-badge.pie { background: #e0e7ff; color: #4338ca; }
+
+    .ruta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--gris-50);
+      border-radius: var(--radio-md);
+    }
+    .ruta-text {
+      flex: 1;
+      font-size: 0.875rem;
+      color: var(--gris-700);
+    }
+    .ruta-icon {
+      color: var(--verde);
+      flex-shrink: 0;
+    }
+
+    .peloton-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 0.8rem;
+      color: var(--gris-500);
+    }
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .participantes-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .progress-track {
+      flex: 1;
+      height: 6px;
+      background: var(--gris-200);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--verde);
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+    .participantes-count {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--gris-700);
+    }
+
+    .peloton-footer {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 8px;
+      border-top: 1px solid var(--gris-100);
+    }
+    .btn-unirme {
+      padding: 8px 20px;
+      border-radius: var(--radio-md);
+      border: none;
+      background: var(--verde);
+      color: var(--blanco);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-unirme:hover {
+      background: var(--verde-dark);
+    }
+    .badge-ya-estas {
+      padding: 8px 16px;
+      border-radius: var(--radio-md);
+      background: var(--verde-light);
+      color: var(--verde-dark);
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--gris-500);
+    }
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 16px;
+      color: var(--gris-300);
+    }
+    .empty-state h3 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gris-700);
+      margin-bottom: 8px;
+    }
+    .empty-state p {
+      font-size: 0.875rem;
+    }
+
+    /* Bottom sheet */
+    .bottom-sheet {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: var(--blanco);
+      border-radius: var(--radio-xl) var(--radio-xl) 0 0;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
+      padding: 16px 20px 32px;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.34,1.1,0.64,1);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .bottom-sheet.open {
+      transform: translateY(0);
+    }
+    .sheet-handle {
+      width: 40px;
+      height: 4px;
+      background: var(--gris-200);
+      border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+    .sheet-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--gris-900);
+      margin-bottom: 20px;
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gris-700);
+      margin-bottom: 6px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--gris-200);
+      border-radius: var(--radio-md);
+      font-size: 0.95rem;
+      background: var(--blanco);
+      color: var(--gris-800);
+      transition: border-color 0.15s;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: var(--verde);
+    }
+
+    /* Autocomplete dropdown */
+    .autocomplete-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--blanco);
+      border: 1px solid var(--gris-200);
+      border-radius: var(--radio-md);
+      box-shadow: var(--sombra-md);
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 10;
+      display: none;
+    }
+    .autocomplete-dropdown.visible {
+      display: block;
+    }
+    .autocomplete-item {
+      padding: 10px 14px;
+      font-size: 0.875rem;
+      color: var(--gris-700);
+      cursor: pointer;
+      border-bottom: 1px solid var(--gris-100);
+    }
+    .autocomplete-item:hover {
+      background: var(--gris-50);
+    }
+    .autocomplete-item:last-child {
+      border-bottom: none;
+    }
+
+    /* Vehicle selector */
+    .vehiculo-selector {
+      display: flex;
+      gap: 8px;
+    }
+    .vehiculo-option {
+      flex: 1;
+      padding: 12px;
+      border: 1.5px solid var(--gris-200);
+      border-radius: var(--radio-md);
+      background: var(--blanco);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .vehiculo-option:hover {
+      background: var(--gris-50);
+    }
+    .vehiculo-option.selected {
+      border-color: var(--verde);
+      background: var(--verde-light);
+    }
+    .vehiculo-option svg {
+      width: 24px;
+      height: 24px;
+      color: var(--gris-600);
+    }
+    .vehiculo-option.selected svg {
+      color: var(--verde-dark);
+    }
+    .vehiculo-option span {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--gris-600);
+    }
+
+    /* Mini mapa */
+    .mini-mapa-container {
+      position: relative;
+      height: 300px;
+      border-radius: var(--radio-lg);
+      overflow: hidden;
+      border: 1px solid var(--gris-200);
+      margin-bottom: 16px;
+    }
+    #mini-mapa {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      z-index: 90;
+      display: none;
+    }
+    .overlay.visible {
+      display: block;
+    }
+
+    /* Leaflet overrides */
+    .leaflet-control-zoom {
+      border-radius: var(--radio-md) !important;
+      border: 1px solid var(--gris-200) !important;
+      box-shadow: var(--sombra-sm) !important;
+    }
+    .leaflet-control-zoom a {
+      border-radius: 0 !important;
+      color: var(--gris-600) !important;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="page-header">
+  <h1 class="page-title">Pelotones</h1>
+  <button class="btn-add" onclick="abrirSheet()" aria-label="Crear pelotón">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  </button>
+</div>
+
+<!-- Filtros -->
+<div class="filtros-container">
+  <div class="filtros-scroll">
+    <button class="filtro-btn active" data-filtro="todos" onclick="setFiltro('todos')">Todos</button>
+    <button class="filtro-btn" data-filtro="bicicleta" onclick="setFiltro('bicicleta')">🚲 Bicicleta</button>
+    <button class="filtro-btn" data-filtro="patineta" onclick="setFiltro('patineta')">⚡ Patineta</button>
+    <button class="filtro-btn" data-filtro="pie" onclick="setFiltro('pie')">🚶 A pie</button>
+  </div>
+</div>
+
+<!-- Lista de pelotones -->
+<div class="pelotones-list" id="pelotones-list">
+  <div class="empty-state">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+    </svg>
+    <h3>Cargando pelotones...</h3>
+  </div>
+</div>
+
+<!-- Overlay -->
+<div class="overlay" id="overlay" onclick="cerrarSheet()"></div>
+
+<!-- Bottom sheet: crear pelotón -->
+<div class="bottom-sheet" id="bottom-sheet">
+  <div class="sheet-handle"></div>
+  <h2 class="sheet-title">Crear pelotón</h2>
+
+  <form id="form-peloton" onsubmit="crearPeloton(event)">
+    <!-- Origen -->
+    <div class="form-group" style="position: relative">
+      <label class="form-label">Origen</label>
+      <input type="text" class="form-input" id="input-origen" placeholder="Ej: Universidad Nacional" autocomplete="off">
+      <div class="autocomplete-dropdown" id="autocomplete-origen"></div>
+    </div>
+
+    <!-- Destino -->
+    <div class="form-group" style="position: relative">
+      <label class="form-label">Destino</label>
+      <input type="text" class="form-input" id="input-destino" placeholder="Ej: Parque Simón Bolívar" autocomplete="off">
+      <div class="autocomplete-dropdown" id="autocomplete-destino"></div>
+    </div>
+
+    <!-- Vehículo -->
+    <div class="form-group">
+      <label class="form-label">Vehículo</label>
+      <div class="vehiculo-selector">
+        <div class="vehiculo-option selected" data-vehiculo="bicicleta" onclick="selectVehiculo('bicicleta')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/>
+            <path d="M15 6a1 1 0 000-2h-3l-3 9H5.5"/><path d="M12 6l-3 9 6.5.5"/>
+          </svg>
+          <span>Bicicleta</span>
+        </div>
+        <div class="vehiculo-option" data-vehiculo="patineta" onclick="selectVehiculo('patineta')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+          <span>Patineta</span>
+        </div>
+        <div class="vehiculo-option" data-vehiculo="pie" onclick="selectVehiculo('pie')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 11 3.8 11 8c0 2.2-1.03 3.5-1 5.62V16c0 2.2-1.8 4-4 4s-4-1.8-4-4z"/>
+            <path d="M16 8c0-2.2 1.8-4 4-4s4 1.8 4 4v8"/>
+          </svg>
+          <span>A pie</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hora de salida -->
+    <div class="form-group">
+      <label class="form-label">Hora de salida</label>
+      <input type="time" class="form-input" id="input-hora" required>
+    </div>
+
+    <!-- Cupo máximo -->
+    <div class="form-group">
+      <label class="form-label">Cupo máximo (2-20)</label>
+      <input type="number" class="form-input" id="input-cupo" min="2" max="20" value="6" required>
+    </div>
+
+    <!-- Mini mapa -->
+    <div class="form-group">
+      <label class="form-label">Ruta en el mapa</label>
+      <div class="mini-mapa-container">
+        <div id="mini-mapa"></div>
+      </div>
+    </div>
+
+    <!-- Botón crear -->
+    <button type="submit" class="btn btn-primary" style="width: 100%">Crear pelotón</button>
+  </form>
+</div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a href="index.html" class="navbar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+    </svg>
+    Mapa
+  </a>
+  <a href="pelotones.html" class="navbar-item active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+    </svg>
+    Pelotones
+  </a>
+  <a href="reportes.html" class="navbar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    Reportes
+  </a>
+  <a href="perfil.html" class="navbar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+    </svg>
+    Perfil
+  </a>
+</nav>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+  import { auth, db } from './firebase.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import {
+    collection, onSnapshot, query, orderBy, addDoc, arrayUnion, doc, updateDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { showToast } from './toast.js';
+
+  // ============================================
+  // GUARD DE SESIÓN
+  // ============================================
+  onAuthStateChanged(auth, (user) => {
+    if (!user) window.location.href = 'login.html';
+  });
+
+  // ============================================
+  // ESTADO
+  // ============================================
+  let filtroActual = 'todos';
+  let pelotonesData = [];
+  let currentUser = auth.currentUser;
+  auth.onAuthStateChanged((user) => { currentUser = user; });
+
+  let vehiculoSeleccionado = 'bicicleta';
+  let origenCoords = null;
+  let destinoCoords = null;
+  let miniMapa = null;
+  let markerOrigen = null;
+  let markerDestino = null;
+  let lineaRuta = null;
+
+  // ============================================
+  // FILTROS
+  // ============================================
+  window.setFiltro = function(filtro) {
+    filtroActual = filtro;
+    document.querySelectorAll('.filtro-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.filtro === filtro);
+    });
+    renderPelotones();
+  };
+
+  // ============================================
+  // CARGAR PELOTONES EN TIEMPO REAL
+  // ============================================
+  const qPelotones = query(collection(db, 'pelotones'), orderBy('createdAt', 'desc'));
+  onSnapshot(qPelotones, (snap) => {
+    pelotonesData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderPelotones();
+  });
+
+  function renderPelotones() {
+    const container = document.getElementById('pelotones-list');
+    const filtrados = filtroActual === 'todos' 
+      ? pelotonesData 
+      : pelotonesData.filter(p => p.vehiculo === filtroActual);
+
+    if (filtrados.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+          </svg>
+          <h3>No hay pelotones</h3>
+          <p>${filtroActual === 'todos' ? 'Sé el primero en crear uno' : 'No hay pelotones de este tipo'}</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = filtrados.map(p => {
+      const iniciales = (p.liderNombre || 'L').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+      const vehiculoIcon = { bicicleta: '🚲', patineta: '⚡', pie: '🚶' }[p.vehiculo] || '🚲';
+      const participantes = p.participantes || [];
+      const cupoMax = p.cupoMax || 6;
+      const progreso = Math.min((participantes.length / cupoMax) * 100, 100);
+      const esParticipante = currentUser && participantes.includes(currentUser.uid);
+
+      return `
+        <div class="peloton-card">
+          <div class="peloton-header">
+            <div class="avatar">${iniciales}</div>
+            <div class="peloton-info">
+              <div class="lider-nombre">${p.liderNombre || 'Sin nombre'}</div>
+              <div class="vehiculo-badge ${p.vehiculo}">
+                ${vehiculoIcon} ${p.vehiculo.charAt(0).toUpperCase() + p.vehiculo.slice(1)}
+              </div>
+            </div>
+          </div>
+
+          <div class="ruta">
+            <span class="ruta-text">${p.origen || 'Origen'} → ${p.destino || 'Destino'}</span>
+            <svg class="ruta-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </div>
+
+          <div class="peloton-meta">
+            <div class="meta-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              ${p.horaSalida || 'Sin hora'}
+            </div>
+            <div class="meta-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+              </svg>
+              ~${estimarDuracion(p.vehiculo)}
+            </div>
+          </div>
+
+          <div class="participantes-bar">
+            <div class="progress-track">
+              <div class="progress-fill" style="width: ${progreso}%"></div>
+            </div>
+            <span class="participantes-count">${participantes.length}/${cupoMax}</span>
+          </div>
+
+          <div class="peloton-footer">
+            ${esParticipante 
+              ? '<span class="badge-ya-estas">✓ Ya estás</span>'
+              : `<button class="btn-unirme" onclick="unirmePeloton('${p.id}')">Unirme</button>`
+            }
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function estimarDuracion(vehiculo) {
+    const duraciones = { bicicleta: '25 min', patineta: '20 min', pie: '35 min' };
+    return duraciones[vehiculo] || '30 min';
+  }
+
+  // ============================================
+  // UNIRSE A PELOTON
+  // ============================================
+  window.unirmePeloton = async function(id) {
+    if (!currentUser) return;
+    try {
+      await updateDoc(doc(db, 'pelotones', id), {
+        participantes: arrayUnion(currentUser.uid)
+      });
+      showToast('¡Te has unido al pelotón!', 'success');
+    } catch (error) {
+      showToast('Error al unirte', 'error');
+    }
+  };
+
+  // ============================================
+  // BOTTOM SHEET
+  // ============================================
+  window.abrirSheet = function() {
+    document.getElementById('bottom-sheet').classList.add('open');
+    document.getElementById('overlay').classList.add('visible');
+    initMiniMapa();
+  };
+
+  window.cerrarSheet = function() {
+    document.getElementById('bottom-sheet').classList.remove('open');
+    document.getElementById('overlay').classList.remove('visible');
+    limpiarFormulario();
+  };
+
+  function limpiarFormulario() {
+    document.getElementById('form-peloton').reset();
+    origenCoords = null;
+    destinoCoords = null;
+    if (markerOrigen) miniMapa.removeLayer(markerOrigen);
+    if (markerDestino) miniMapa.removeLayer(markerDestino);
+    if (lineaRuta) miniMapa.removeLayer(lineaRuta);
+    markerOrigen = null;
+    markerDestino = null;
+    lineaRuta = null;
+    selectVehiculo('bicicleta');
+  }
+
+  // ============================================
+  // SELECTOR DE VEHÍCULO
+  // ============================================
+  window.selectVehiculo = function(vehiculo) {
+    vehiculoSeleccionado = vehiculo;
+    document.querySelectorAll('.vehiculo-option').forEach(opt => {
+      opt.classList.toggle('selected', opt.dataset.vehiculo === vehiculo);
+    });
+  };
+
+  // ============================================
+  // AUTOCOMPLETE NOMINATIM
+  // ============================================
+  let debounceTimer = null;
+
+  function setupAutocomplete(inputId, dropdownId, isOrigen) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(dropdownId);
+
+    input.addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      const query = e.target.value.trim();
+      if (query.length < 3) {
+        dropdown.classList.remove('visible');
+        return;
+      }
+
+      debounceTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ', Bogotá, Colombia')}&format=json&limit=5`);
+          const data = await res.json();
+          
+          if (data.length > 0) {
+            dropdown.innerHTML = data.map(item => `
+              <div class="autocomplete-item" data-lat="${item.lat}" data-lon="${item.lon}" data-name="${item.display_name.split(',')[0]}">
+                ${item.display_name.split(',')[0]}
+              </div>
+            `).join('');
+            dropdown.classList.add('visible');
+
+            dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
+              item.addEventListener('click', () => {
+                input.value = item.dataset.name;
+                const coords = { lat: parseFloat(item.dataset.lat), lng: parseFloat(item.dataset.lon) };
+                if (isOrigen) {
+                  origenCoords = coords;
+                  actualizarMarker(markerOrigen, coords, 'Origen', '#1d9e75');
+                } else {
+                  destinoCoords = coords;
+                  actualizarMarker(markerDestino, coords, 'Destino', '#2563eb');
+                }
+                actualizarLineaRuta();
+                dropdown.classList.remove('visible');
+              });
+            });
+          } else {
+            dropdown.classList.remove('visible');
+          }
+        } catch (error) {
+          console.error('Error en autocomplete:', error);
+        }
+      }, 400);
+    });
+
+    // Cerrar dropdown al hacer click fuera
+    document.addEventListener('click', (e) => {
+      if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('visible');
+      }
+    });
+  }
+
+  setupAutocomplete('input-origen', 'autocomplete-origen', true);
+  setupAutocomplete('input-destino', 'autocomplete-destino', false);
+
+  // ============================================
+  // MINI MAPA
+  // ============================================
+  function initMiniMapa() {
+    if (miniMapa) return;
+
+    miniMapa = L.map('mini-mapa', { zoomControl: false }).setView([4.7110, -74.0721], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: false
+    }).addTo(miniMapa);
+  }
+
+  function actualizarMarker(marker, coords, label, color) {
+    if (marker) miniMapa.removeLayer(marker);
+
+    marker = L.marker([coords.lat, coords.lng], {
+      icon: L.divIcon({
+        html: `<div style="width:24px;height:24px;background:${color};border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.2);font-size:10px;font-weight:600;color:white">${label[0]}</div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+        className: ''
+      })
+    }).addTo(miniMapa);
+
+    if (label === 'Origen') markerOrigen = marker;
+    else markerDestino = marker;
+
+    miniMapa.setView([coords.lat, coords.lng], 14);
+  }
+
+  function actualizarLineaRuta() {
+    if (lineaRuta) miniMapa.removeLayer(lineaRuta);
+
+    if (origenCoords && destinoCoords) {
+      lineaRuta = L.polyline([origenCoords, destinoCoords], {
+        color: '#1d9e75',
+        weight: 3,
+        opacity: 0.7,
+        dashArray: '8 4'
+      }).addTo(miniMapa);
+
+      const bounds = L.latLngBounds([origenCoords, destinoCoords]);
+      miniMapa.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }
+
+  // ============================================
+  // CREAR PELOTON
+  // ============================================
+  window.crearPeloton = async function(e) {
+    e.preventDefault();
+
+    if (!currentUser) {
+      showToast('Debes iniciar sesión', 'error');
+      return;
+    }
+
+    if (!origenCoords) {
+      showToast('Selecciona un origen válido', 'warning');
+      return;
+    }
+
+    const origen = document.getElementById('input-origen').value.trim();
+    const destino = document.getElementById('input-destino').value.trim();
+    const hora = document.getElementById('input-hora').value;
+    const cupo = parseInt(document.getElementById('input-cupo').value);
+
+    if (!origen || !destino || !hora) {
+      showToast('Completa todos los campos', 'warning');
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, 'pelotones'), {
+        lider: currentUser.uid,
+        liderNombre: currentUser.displayName || 'Usuario',
+        origen,
+        destino,
+        vehiculo: vehiculoSeleccionado,
+        horaSalida: hora,
+        cupoMax: cupo,
+        participantes: [currentUser.uid],
+        lat: origenCoords.lat,
+        lng: origenCoords.lng,
+        createdAt: new Date()
+      });
+
+      showToast('¡Pelotón creado exitosamente!', 'success');
+      cerrarSheet();
+    } catch (error) {
+      console.error('Error al crear pelotón:', error);
+      showToast('Error al crear pelotón', 'error');
+    }
+  };
+
+</script>
+
+</body>
+</html>

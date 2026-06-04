@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniRutas — Historial</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--gris-50, #f9fafb);
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    /* Header */
+    .header {
+      background: var(--blanco, #ffffff);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--gris-200, #e5e7eb);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radio-md, 8px);
+      border: 1px solid var(--gris-200, #e5e7eb);
+      background: var(--blanco, #ffffff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .back-btn:hover {
+      background: var(--gris-50, #f9fafb);
+    }
+
+    .header-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--gris-900, #111827);
+    }
+
+    /* Tabs */
+    .tabs {
+      background: var(--blanco, #ffffff);
+      display: flex;
+      padding: 4px;
+      gap: 4px;
+      margin: 16px 20px;
+      border-radius: var(--radio-lg, 12px);
+      border: 1px solid var(--gris-200, #e5e7eb);
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: var(--radio-md, 8px);
+      border: none;
+      background: transparent;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gris-600, #4b5563);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab.active {
+      background: var(--verde, #1d9e75);
+      color: var(--blanco, #ffffff);
+      font-weight: 600;
+    }
+
+    /* Statistics */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 0 20px 20px;
+    }
+
+    .stat-card {
+      background: var(--blanco, #ffffff);
+      border-radius: var(--radio-lg, 12px);
+      border: 1px solid var(--gris-200, #e5e7eb);
+      padding: 16px 12px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gris-900, #111827);
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--gris-500, #6b7280);
+    }
+
+    /* Route list */
+    .routes-list {
+      padding: 0 20px;
+      display: none;
+    }
+    .routes-list.active {
+      display: block;
+    }
+
+    .route-card {
+      background: var(--blanco, #ffffff);
+      border-radius: var(--radio-lg, 12px);
+      border: 1px solid var(--gris-200, #e5e7eb);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .route-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .vehicle-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radio-md, 8px);
+      background: var(--verde-light, #dcfce7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .route-info {
+      flex: 1;
+    }
+
+    .route-route {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--gris-900, #111827);
+      margin-bottom: 4px;
+    }
+
+    .route-meta {
+      font-size: 0.8125rem;
+      color: var(--gris-500, #6b7280);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .route-rating {
+      display: flex;
+      gap: 2px;
+      margin-top: 8px;
+    }
+
+    .star {
+      color: var(--gris-200, #e5e7eb);
+      font-size: 14px;
+    }
+    .star.filled {
+      color: #f59e0b;
+    }
+
+    .route-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--gris-100, #f3f4f6);
+    }
+
+    .fav-btn {
+      width: 40px;
+      height: 36px;
+      border-radius: var(--radio-md, 8px);
+      border: 1.5px solid var(--gris-200, #e5e7eb);
+      background: var(--blanco, #ffffff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .fav-btn:hover {
+      border-color: #f59e0b;
+    }
+    .fav-btn.active {
+      background: #fef3c7;
+      border-color: #f59e0b;
+    }
+    .fav-btn.active svg {
+      fill: #f59e0b;
+      stroke: #f59e0b;
+    }
+
+    .repeat-btn {
+      flex: 1;
+      padding: 8px 16px;
+      border-radius: var(--radio-md, 8px);
+      border: 1.5px solid var(--verde, #1d9e75);
+      background: var(--verde-light, #dcfce7);
+      color: var(--verde-dark, #0f6e56);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .repeat-btn:hover {
+      background: var(--verde, #1d9e75);
+      color: var(--blanco, #ffffff);
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      display: none;
+    }
+    .empty-state.active {
+      display: block;
+    }
+
+    .empty-illustration {
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 24px;
+    }
+
+    .empty-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gris-900, #111827);
+      margin-bottom: 8px;
+    }
+
+    .empty-text {
+      font-size: 0.875rem;
+      color: var(--gris-500, #6b7280);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <button class="back-btn" onclick="window.location.href='perfil.html'">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+  </button>
+  <h1 class="header-title">Historial</h1>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" id="tab-mis-rutas">Mis rutas</button>
+  <button class="tab" id="tab-favoritas">Favoritas</button>
+</div>
+
+<!-- Statistics -->
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-value" id="stat-total">0</div>
+    <div class="stat-label">Rutas</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="stat-km">0</div>
+    <div class="stat-label">Km</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="stat-rating">-</div>
+    <div class="stat-label">Calificación</div>
+  </div>
+</div>
+
+<!-- Mis rutas list -->
+<div class="routes-list active" id="list-mis-rutas">
+  <!-- Routes will be rendered here -->
+</div>
+
+<!-- Favoritas list -->
+<div class="routes-list" id="list-favoritas">
+  <!-- Routes will be rendered here -->
+</div>
+
+<!-- Empty state - Mis rutas -->
+<div class="empty-state" id="empty-mis-rutas">
+  <div class="empty-illustration">
+    <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="100" cy="100" r="80" fill="#f0fdf4"/>
+      <path d="M60 100 L140 100" stroke="#1d9e75" stroke-width="4" stroke-linecap="round"/>
+      <path d="M60 120 L140 120" stroke="#1d9e75" stroke-width="4" stroke-linecap="round" stroke-dasharray="8 4"/>
+      <circle cx="80" cy="110" r="6" fill="#1d9e75"/>
+      <circle cx="120" cy="110" r="6" fill="#1d9e75"/>
+      <text x="100" y="160" text-anchor="middle" fill="#9ca3af" font-size="14">Sin rutas aún</text>
+    </svg>
+  </div>
+  <h3 class="empty-title">Aún no tienes rutas</h3>
+  <p class="empty-text">Únete a un pelotón o crea uno para empezar</p>
+</div>
+
+<!-- Empty state - Favoritas -->
+<div class="empty-state" id="empty-favoritas">
+  <div class="empty-illustration">
+    <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="100" cy="100" r="80" fill="#fef3c7"/>
+      <path d="M100 70 L110 90 L130 90 L115 105 L120 125 L100 115 L80 125 L85 105 L70 90 L90 90 Z" stroke="#f59e0b" stroke-width="2" fill="none"/>
+      <text x="100" y="160" text-anchor="middle" fill="#9ca3af" font-size="14">Sin favoritos</text>
+    </svg>
+  </div>
+  <h3 class="empty-title">Sin rutas favoritas</h3>
+  <p class="empty-text">Marca una ruta con estrella para agregarla aquí</p>
+</div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a href="index.html" class="navbar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+    </svg>
+    Mapa
+  </a>
+  <a href="pelotones.html" class="navbar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+    </svg>
+    Pelotones
+  </a>
+  <a href="reportes.html" class="navbar-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    Reportes
+  </a>
+  <a href="perfil.html" class="navbar-item active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+    </svg>
+    Perfil
+  </a>
+</nav>
+
+<script type="module">
+  import { auth, db } from './firebase.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import {
+    collection, onSnapshot, query, where, or, orderBy
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { showToast } from './toast.js';
+
+  // Auth guard
+  onAuthStateChanged(auth, (user) => {
+    if (!user) window.location.href = 'login.html';
+  });
+
+  let currentUser = null;
+  let misRutas = [];
+  let calificaciones = {};
+  let favoritos = JSON.parse(localStorage.getItem('favoritos') || '[]');
+  let currentTab = 'mis-rutas';
+
+  // Vehicle icons
+  const vehicleIcons = {
+    bicicleta: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 000-2h-3l-3 9H5.5"/><path d="M12 6l-3 9 6.5.5"/></svg>`,
+    patineta: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 14 L18 14"/><path d="M9 14 L12 6 L15 14"/></svg>`,
+    pie: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v-2a2 2 0 012-2h12a2 2 0 012 2v2"/><circle cx="12" cy="8" r="4"/><path d="M12 12v4"/></svg>`
+  };
+
+  // Format date in Spanish
+  function formatFecha(fecha) {
+    if (!fecha) return '';
+    const date = fecha.toDate ? fecha.toDate() : new Date(fecha);
+    const options = { weekday: 'long', day: 'numeric', month: 'short' };
+    const fechaStr = date.toLocaleDateString('es-CO', options);
+    const hora = date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+    return `${fechaStr.charAt(0).toUpperCase() + fechaStr.slice(1)} · ${hora}`;
+  }
+
+  // Render stars
+  function renderStars(rating) {
+    if (!rating) return '';
+    const fullStars = Math.floor(rating);
+    const hasHalf = rating % 1 >= 0.5;
+    let html = '';
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        html += `<span class="star filled">★</span>`;
+      } else if (i === fullStars && hasHalf) {
+        html += `<span class="star filled">★</span>`;
+      } else {
+        html += `<span class="star">★</span>`;
+      }
+    }
+    return html;
+  }
+
+  // Render route card
+  function renderRouteCard(ruta) {
+    const rating = calificaciones[ruta.id]?.promedio || 0;
+    const isFav = favoritos.includes(ruta.id);
+    const icon = vehicleIcons[ruta.vehiculo] || vehicleIcons.bicicleta;
+
+    return `
+      <div class="route-card" data-id="${ruta.id}">
+        <div class="route-header">
+          <div class="vehicle-icon">${icon}</div>
+          <div class="route-info">
+            <div class="route-route">${ruta.origen || ''} → ${ruta.destino || ''}</div>
+            <div class="route-meta">
+              <span>${formatFecha(ruta.createdAt || ruta.horaSalida)}</span>
+              <span>·</span>
+              <span>${(ruta.participantes || []).length} participantes</span>
+            </div>
+            ${rating > 0 ? `<div class="route-rating">${renderStars(rating)} <span style="font-size:12px;color:var(--gris-400);margin-left:4px">${rating.toFixed(1)}</span></div>` : ''}
+          </div>
+        </div>
+        <div class="route-actions">
+          <button class="fav-btn ${isFav ? 'active' : ''}" onclick="window.toggleFav('${ruta.id}')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </button>
+          <button class="repeat-btn" onclick="window.repetirRuta('${ruta.id}')">
+            Repetir ruta
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  // Update statistics
+  function updateStats() {
+    const total = misRutas.length;
+    const km = total * 5; // 5km average per route
+    const ratings = Object.values(calificaciones).map(c => c.promedio).filter(r => r > 0);
+    const avgRating = ratings.length > 0 ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : '-';
+
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-km').textContent = km;
+    document.getElementById('stat-rating').textContent = avgRating;
+  }
+
+  // Render lists
+  function renderLists() {
+    const misRutasList = document.getElementById('list-mis-rutas');
+    const favoritasList = document.getElementById('list-favoritas');
+    const emptyMisRutas = document.getElementById('empty-mis-rutas');
+    const emptyFavoritas = document.getElementById('empty-favoritas');
+
+    // Mis rutas
+    if (misRutas.length === 0) {
+      misRutasList.style.display = 'none';
+      emptyMisRutas.classList.add('active');
+    } else {
+      misRutasList.style.display = 'block';
+      emptyMisRutas.classList.remove('active');
+      misRutasList.innerHTML = misRutas.map(renderRouteCard).join('');
+    }
+
+    // Favoritas
+    const favoritasRutas = misRutas.filter(r => favoritos.includes(r.id));
+    if (favoritasRutas.length === 0) {
+      favoritasList.style.display = 'none';
+      emptyFavoritas.classList.add('active');
+    } else {
+      favoritasList.style.display = 'block';
+      emptyFavoritas.classList.remove('active');
+      favoritasList.innerHTML = favoritasRutas.map(renderRouteCard).join('');
+    }
+
+    updateStats();
+  }
+
+  // Tab switching
+  document.getElementById('tab-mis-rutas').addEventListener('click', () => {
+    currentTab = 'mis-rutas';
+    document.getElementById('tab-mis-rutas').classList.add('active');
+    document.getElementById('tab-favoritas').classList.remove('active');
+    document.getElementById('list-mis-rutas').classList.add('active');
+    document.getElementById('list-favoritas').classList.remove('active');
+    document.getElementById('empty-mis-rutas').classList.add('active');
+    document.getElementById('empty-favoritas').classList.remove('active');
+  });
+
+  document.getElementById('tab-favoritas').addEventListener('click', () => {
+    currentTab = 'favoritas';
+    document.getElementById('tab-favoritas').classList.add('active');
+    document.getElementById('tab-mis-rutas').classList.remove('active');
+    document.getElementById('list-favoritas').classList.add('active');
+    document.getElementById('list-mis-rutas').classList.remove('active');
+    document.getElementById('empty-favoritas').classList.add('active');
+    document.getElementById('empty-mis-rutas').classList.remove('active');
+  });
+
+  // Global functions for onclick handlers
+  window.toggleFav = function(id) {
+    const index = favoritos.indexOf(id);
+    if (index > -1) {
+      favoritos.splice(index, 1);
+    } else {
+      favoritos.push(id);
+    }
+    localStorage.setItem('favoritos', JSON.stringify(favoritos));
+    renderLists();
+  };
+
+  window.repetirRuta = function(id) {
+    const ruta = misRutas.find(r => r.id === id);
+    if (ruta) {
+      localStorage.setItem('borrador_peloton', JSON.stringify(ruta));
+      window.location.href = 'pelotones.html';
+    }
+  };
+
+  // Load pelotones
+  onAuthStateChanged(auth, (user) => {
+    if (!user) return;
+    currentUser = user;
+
+    const qPelotones = query(
+      collection(db, 'pelotones'),
+      or(
+        where('lider', '==', user.uid),
+        where('participantes', 'array-contains', user.uid)
+      ),
+      orderBy('createdAt', 'desc')
+    );
+
+    onSnapshot(qPelotones, (snap) => {
+      misRutas = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderLists();
+    });
+
+    // Load calificaciones
+    const qCalificaciones = query(collection(db, 'calificaciones'));
+    onSnapshot(qCalificaciones, (snap) => {
+      snap.docs.forEach(doc => {
+        calificaciones[doc.data().rutaId] = doc.data();
+      });
+      renderLists();
+    });
+  });
+</script>
+
+</body>
+</html>

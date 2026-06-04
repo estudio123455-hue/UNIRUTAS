@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniRutas — Bienvenido</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--blanco, #ffffff);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .onboarding-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      max-width: 500px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .skip-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      color: var(--gris-500, #6b7280);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+    .skip-btn:hover {
+      color: var(--gris-700, #374151);
+    }
+
+    .carousel {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .carousel-track {
+      display: flex;
+      transition: transform 0.5s cubic-bezier(0.34, 1.1, 0.64, 1);
+    }
+
+    .carousel-slide {
+      flex: 0 0 100%;
+      padding: 40px 20px;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .carousel-slide.active {
+      opacity: 1;
+    }
+
+    .illustration {
+      width: 250px;
+      height: 250px;
+      margin: 0 auto 32px;
+    }
+
+    .slide-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gris-900, #111827);
+      margin-bottom: 12px;
+    }
+
+    .slide-text {
+      font-size: 1rem;
+      color: var(--gris-600, #4b5563);
+      line-height: 1.6;
+    }
+
+    .dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 32px 0;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--gris-200, #e5e7eb);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .dot.active {
+      background: var(--verde, #1d9e75);
+      width: 24px;
+      border-radius: 4px;
+    }
+
+    .btn-next {
+      width: 100%;
+      padding: 16px 32px;
+      border-radius: var(--radio-lg, 12px);
+      border: none;
+      background: var(--verde, #1d9e75);
+      color: var(--blanco, #ffffff);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .btn-next:hover {
+      background: var(--verde-dark, #0f6e56);
+      transform: translateY(-1px);
+    }
+    .btn-next:active {
+      transform: translateY(0);
+    }
+
+    .logo {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--verde, #1d9e75);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-text {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--gris-900, #111827);
+    }
+  </style>
+</head>
+<body>
+
+<a class="logo" href="index.html">
+  <div class="logo-icon">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 8v4l3 3"/>
+    </svg>
+  </div>
+  <span class="logo-text">UniRutas</span>
+</a>
+
+<button class="skip-btn" id="skip-btn">Saltar</button>
+
+<div class="onboarding-container">
+  <div class="carousel">
+    <div class="carousel-track" id="carousel-track">
+      
+      <!-- Paso 1 -->
+      <div class="carousel-slide active" data-step="0">
+        <div class="illustration">
+          <svg viewBox="0 0 250 250" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background circle -->
+            <circle cx="125" cy="125" r="120" fill="#f0fdf4"/>
+            
+            <!-- Map base -->
+            <rect x="50" y="60" width="150" height="130" rx="8" fill="#ffffff" stroke="#1d9e75" stroke-width="2"/>
+            
+            <!-- Ciclovía routes -->
+            <path d="M60 90 L190 90" stroke="#1d9e75" stroke-width="4" stroke-linecap="round"/>
+            <path d="M60 120 L190 120" stroke="#1d9e75" stroke-width="4" stroke-linecap="round"/>
+            <path d="M60 150 L190 150" stroke="#1d9e75" stroke-width="4" stroke-linecap="round" stroke-dasharray="8 4"/>
+            
+            <!-- Buildings -->
+            <rect x="70" y="70" width="20" height="15" rx="2" fill="#dbeafe"/>
+            <rect x="100" y="70" width="20" height="15" rx="2" fill="#dbeafe"/>
+            <rect x="130" y="70" width="20" height="15" rx="2" fill="#dbeafe"/>
+            <rect x="160" y="70" width="20" height="15" rx="2" fill="#dbeafe"/>
+            
+            <!-- Bicycles -->
+            <g transform="translate(85, 95)">
+              <circle cx="8" cy="12" r="5" stroke="#1d9e75" stroke-width="2" fill="none"/>
+              <circle cx="22" cy="12" r="5" stroke="#1d9e75" stroke-width="2" fill="none"/>
+              <path d="M8 12 L14 4 L22 4 L22 12" stroke="#1d9e75" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </g>
+            <g transform="translate(145, 125)">
+              <circle cx="8" cy="12" r="5" stroke="#1d9e75" stroke-width="2" fill="none"/>
+              <circle cx="22" cy="12" r="5" stroke="#1d9e75" stroke-width="2" fill="none"/>
+              <path d="M8 12 L14 4 L22 4 L22 12" stroke="#1d9e75" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </g>
+            <g transform="translate(115, 155)">
+              <circle cx="8" cy="12" r="5" stroke="#2563eb" stroke-width="2" fill="none"/>
+              <circle cx="22" cy="12" r="5" stroke="#2563eb" stroke-width="2" fill="none"/>
+              <path d="M8 12 L14 4 L22 4 L22 12" stroke="#2563eb" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </g>
+            
+            <!-- University markers -->
+            <circle cx="80" cy="110" r="8" fill="#2563eb"/>
+            <path d="M76 106 L80 102 L84 106 L84 114 L80 118 L76 114 Z" fill="white"/>
+            
+            <circle cx="170" cy="140" r="8" fill="#2563eb"/>
+            <path d="M166 136 L170 132 L174 136 L174 144 L170 148 L166 144 Z" fill="white"/>
+          </svg>
+        </div>
+        <h2 class="slide-title">Muévete seguro por Bogotá</h2>
+        <p class="slide-text">UniRutas centraliza las ciclovías, rutas seguras y perímetros universitarios para que llegues tranquilo a tu destino</p>
+      </div>
+
+      <!-- Paso 2 -->
+      <div class="carousel-slide" data-step="1">
+        <div class="illustration">
+          <svg viewBox="0 0 250 250" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background circle -->
+            <circle cx="125" cy="125" r="120" fill="#fef3c7"/>
+            
+            <!-- Road -->
+            <path d="M30 180 Q125 100 220 180" stroke="#f59e0b" stroke-width="8" fill="none" stroke-linecap="round"/>
+            <path d="M30 180 Q125 100 220 180" stroke="#ffffff" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="12 8"/>
+            
+            <!-- Cyclist 1 -->
+            <g transform="translate(60, 150)">
+              <circle cx="10" cy="15" r="6" stroke="#f59e0b" stroke-width="2" fill="none"/>
+              <circle cx="26" cy="15" r="6" stroke="#f59e0b" stroke-width="2" fill="none"/>
+              <path d="M10 15 L18 5 L26 5 L26 15" stroke="#f59e0b" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <circle cx="18" cy="3" r="4" fill="#f59e0b"/>
+            </g>
+            
+            <!-- Cyclist 2 -->
+            <g transform="translate(95, 135)">
+              <circle cx="10" cy="15" r="6" stroke="#f59e0b" stroke-width="2" fill="none"/>
+              <circle cx="26" cy="15" r="6" stroke="#f59e0b" stroke-width="2" fill="none"/>
+              <path d="M10 15 L18 5 L26 5 L26 15" stroke="#f59e0b" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <circle cx="18" cy="3" r="4" fill="#f59e0b"/>
+            </g>
+            
+            <!-- Cyclist 3 -->
+            <g transform="translate(130, 125)">
+              <circle cx="10" cy="15" r="6" stroke="#f59e0b" stroke-width="2" fill="none"/>
+              <circle cx="26" cy="15" r="6" stroke="#f59e0b" stroke-width="2" fill="none"/>
+              <path d="M10 15 L18 5 L26 5 L26 15" stroke="#f59e0b" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <circle cx="18" cy="3" r="4" fill="#f59e0b"/>
+            </g>
+            
+            <!-- Cyclist 4 -->
+            <g transform="translate(165, 135)">
+              <circle cx="10" cy="15" r="6" stroke="#f59e0b" stroke-width="2" fill="none"/>
+              <circle cx="26" cy="15" r="6" stroke="#f59e0b" stroke-width="2" fill="none"/>
+              <path d="M10 15 L18 5 L26 5 L26 15" stroke="#f59e0b" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <circle cx="18" cy="3" r="4" fill="#f59e0b"/>
+            </g>
+            
+            <!-- Connection lines -->
+            <path d="M78 165 L95 150" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 4" opacity="0.5"/>
+            <path d="M121 150 L130 140" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 4" opacity="0.5"/>
+            <path d="M156 140 L165 150" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 4" opacity="0.5"/>
+          </svg>
+        </div>
+        <h2 class="slide-title">Viaja en pelotón</h2>
+        <p class="slide-text">Únete a grupos de ciclistas, peatones y patinadores que van hacia tu misma dirección. Mayor seguridad en números</p>
+      </div>
+
+      <!-- Paso 3 -->
+      <div class="carousel-slide" data-step="2">
+        <div class="illustration">
+          <svg viewBox="0 0 250 250" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background circle -->
+            <circle cx="125" cy="125" r="120" fill="#fee2e2"/>
+            
+            <!-- Map base -->
+            <rect x="50" y="60" width="150" height="130" rx="8" fill="#ffffff" stroke="#dc2626" stroke-width="2"/>
+            
+            <!-- Grid lines -->
+            <path d="M50 90 L200 90" stroke="#fee2e2" stroke-width="1"/>
+            <path d="M50 120 L200 120" stroke="#fee2e2" stroke-width="1"/>
+            <path d="M50 150 L200 150" stroke="#fee2e2" stroke-width="1"/>
+            <path d="M80 60 L80 190" stroke="#fee2e2" stroke-width="1"/>
+            <path d="M125 60 L125 190" stroke="#fee2e2" stroke-width="1"/>
+            <path d="M170 60 L170 190" stroke="#fee2e2" stroke-width="1"/>
+            
+            <!-- Danger markers -->
+            <g transform="translate(70, 100)">
+              <circle cx="12" cy="12" r="12" fill="#dc2626"/>
+              <text x="12" y="17" text-anchor="middle" fill="white" font-size="14" font-weight="bold">!</text>
+            </g>
+            
+            <g transform="translate(150, 130)">
+              <circle cx="12" cy="12" r="12" fill="#92400e"/>
+              <text x="12" y="17" text-anchor="middle" fill="white" font-size="14">🕳️</text>
+            </g>
+            
+            <g transform="translate(100, 160)">
+              <circle cx="12" cy="12" r="12" fill="#1e40af"/>
+              <text x="12" y="17" text-anchor="middle" fill="white" font-size="14">🌊</text>
+            </g>
+            
+            <g transform="translate(180, 85)">
+              <circle cx="12" cy="12" r="12" fill="#7c3aed"/>
+              <text x="12" y="17" text-anchor="middle" fill="white" font-size="14">👤</text>
+            </g>
+            
+            <!-- Pulse effect on danger markers -->
+            <circle cx="82" cy="112" r="16" fill="none" stroke="#dc2626" stroke-width="2" opacity="0.3">
+              <animate attributeName="r" from="12" to="20" dur="1.5s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" from="0.5" to="0" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+            
+            <circle cx="162" cy="142" r="16" fill="none" stroke="#92400e" stroke-width="2" opacity="0.3">
+              <animate attributeName="r" from="12" to="20" dur="1.5s" repeatCount="indefinite" begin="0.5s"/>
+              <animate attributeName="opacity" from="0.5" to="0" dur="1.5s" repeatCount="indefinite" begin="0.5s"/>
+            </circle>
+          </svg>
+        </div>
+        <h2 class="slide-title">Reporta y protege</h2>
+        <p class="slide-text">Avisa a tu comunidad sobre huecos, inundaciones o situaciones de riesgo en tiempo real</p>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="dots" id="dots">
+    <div class="dot active" data-step="0"></div>
+    <div class="dot" data-step="1"></div>
+    <div class="dot" data-step="2"></div>
+  </div>
+
+  <button class="btn-next" id="btn-next">Siguiente</button>
+</div>
+
+<script>
+  // Check if onboarding has been seen
+  if (localStorage.getItem('onboarding_visto') === 'true') {
+    window.location.href = 'login.html';
+  }
+
+  const track = document.getElementById('carousel-track');
+  const dots = document.querySelectorAll('.dot');
+  const slides = document.querySelectorAll('.carousel-slide');
+  const btnNext = document.getElementById('btn-next');
+  const skipBtn = document.getElementById('skip-btn');
+  
+  let currentStep = 0;
+  const totalSteps = 3;
+
+  function goToStep(step) {
+    currentStep = step;
+    
+    // Update track position
+    track.style.transform = `translateX(-${step * 100}%)`;
+    
+    // Update slides
+    slides.forEach((slide, index) => {
+      slide.classList.toggle('active', index === step);
+    });
+    
+    // Update dots
+    dots.forEach((dot, index) => {
+      dot.classList.toggle('active', index === step);
+    });
+    
+    // Update button text
+    if (step === totalSteps - 1) {
+      btnNext.textContent = 'Empezar';
+    } else {
+      btnNext.textContent = 'Siguiente';
+    }
+    
+    // Update skip button visibility
+    if (step === totalSteps - 1) {
+      skipBtn.style.display = 'none';
+    } else {
+      skipBtn.style.display = 'block';
+    }
+  }
+
+  // Next button
+  btnNext.addEventListener('click', () => {
+    if (currentStep < totalSteps - 1) {
+      goToStep(currentStep + 1);
+    } else {
+      finishOnboarding();
+    }
+  });
+
+  // Skip button
+  skipBtn.addEventListener('click', finishOnboarding);
+
+  // Dots navigation
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      goToStep(parseInt(dot.dataset.step));
+    });
+  });
+
+  // Finish onboarding
+  function finishOnboarding() {
+    localStorage.setItem('onboarding_visto', 'true');
+    window.location.href = 'login.html';
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') {
+      e.preventDefault();
+      if (currentStep < totalSteps - 1) {
+        goToStep(currentStep + 1);
+      } else {
+        finishOnboarding();
+      }
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (currentStep > 0) {
+        goToStep(currentStep - 1);
+      }
+    }
+  });
+
+  // Touch swipe support
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  const carousel = document.querySelector('.carousel');
+  
+  carousel.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, false);
+
+  carousel.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, false);
+
+  function handleSwipe() {
+    const swipeThreshold = 50;
+    const diff = touchStartX - touchEndX;
+    
+    if (diff > swipeThreshold) {
+      // Swipe left - next
+      if (currentStep < totalSteps - 1) {
+        goToStep(currentStep + 1);
+      }
+    } else if (diff < -swipeThreshold) {
+      // Swipe right - previous
+      if (currentStep > 0) {
+        goToStep(currentStep - 1);
+      }
+    }
+  }
+</script>
+
+</body>
+</html>
