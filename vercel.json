@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/onboarding.html" }
+  ],
+  "cleanUrls": true
+}
