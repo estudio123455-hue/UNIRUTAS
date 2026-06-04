@@ -6,6 +6,8 @@
   <title>UniRutas — Reportes</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -509,11 +511,12 @@
 </nav>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 <script type="module">
   import { auth, db } from './firebase.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import {
-    collection, onSnapshot, query, orderBy, limit, addDoc, serverTimestamp
+    collection, onSnapshot, query, orderBy, limit, addDoc, serverTimestamp, where, Timestamp, doc, runTransaction
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { showToast } from './toast.js';
 
@@ -538,6 +541,7 @@
   let miniMapa = null;
   let markerReporte = null;
   let marcadoresMapa = {};
+  let clusterReportes = null;
 
   const infoTipos = {
     hueco: { color: '#92400e', emoji: '🕳️', label: 'Hueco' },
@@ -558,11 +562,14 @@
       maxZoom: 19,
       attribution: false
     }).addTo(mapa);
+
+    // Crear grupo de clustering para reportes
+    clusterReportes = L.markerClusterGroup().addTo(mapa);
   }
 
   function actualizarMarcadoresMapa() {
-    // Limpiar marcadores viejos
-    Object.values(marcadoresMapa).forEach(m => mapa.removeLayer(m));
+    // Limpiar marcadores viejos del cluster
+    clusterReportes.clearLayers();
     marcadoresMapa = {};
 
     const filtrados = filtroActual === 'todos' 
@@ -586,9 +593,9 @@
             <strong style="color:${info.color}">${info.label}</strong><br>
             <span style="font-size:12px; color:#6b7280">${r.descripcion || 'Sin descripción'}</span>
           </div>
-        `)
-        .addTo(mapa);
+        `);
       
+      clusterReportes.addLayer(marker);
       marcadoresMapa[r.id] = marker;
     });
   }
@@ -608,7 +615,15 @@
   // ============================================
   // CARGAR REPORTES EN TIEMPO REAL
   // ============================================
-  const qReportes = query(collection(db, 'reportes'), orderBy('createdAt', 'desc'), limit(50));
+  const HORAS_VIDA = 24; // Reportes expiran después de 24 horas
+  const limite = Timestamp.fromMillis(Date.now() - HORAS_VIDA * 60 * 60 * 1000);
+  
+  const qReportes = query(
+    collection(db, 'reportes'),
+    where('createdAt', '>', limite),
+    orderBy('createdAt', 'desc'),
+    limit(50)
+  );
   onSnapshot(qReportes, (snap) => {
     reportesData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     initMapa();
@@ -622,7 +637,10 @@
       ? reportesData 
       : reportesData.filter(r => r.tipo === filtroActual);
 
-    if (filtrados.length === 0) {
+    // Ocultar reportes resueltos
+    const activos = filtrados.filter(r => !r.resuelto);
+
+    if (activos.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -636,9 +654,11 @@
       return;
     }
 
-    container.innerHTML = filtrados.map(r => {
+    container.innerHTML = activos.map(r => {
       const info = infoTipos[r.tipo] || infoTipos.otro;
       const tiempo = formatearTiempo(r.createdAt);
+      const yoVote = r.votos?.[currentUser?.uid];
+      const score = r.score || 0;
 
       return `
         <div class="reporte-card">
@@ -646,6 +666,7 @@
             <div class="reporte-icon ${r.tipo}">${info.emoji}</div>
             <div class="reporte-info">
               <span class="tipo-badge ${r.tipo}">${info.label}</span>
+              <span style="margin-left: 8px; font-size: 0.8rem; color: var(--gris-500); font-weight: 600;">Score: ${score}</span>
             </div>
           </div>
 
@@ -666,8 +687,26 @@
             </div>
           </div>
 
-          <div class="reporte-footer">
+          <div class="reporte-footer" style="display: flex; gap: 8px; justify-content: flex-end;">
             <button class="btn-ver-mapa" onclick="verEnMapa('${r.id}', ${r.lat}, ${r.lng})">Ver en mapa</button>
+            <button 
+              class="btn-ver-mapa" 
+              onclick="votarReporte('${r.id}', true)" 
+              ${yoVote === true ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
+              style="border-color: var(--verde); color: var(--verde);"
+              title="Útil"
+            >
+              👍
+            </button>
+            <button 
+              class="btn-ver-mapa" 
+              onclick="votarReporte('${r.id}', false)" 
+              ${yoVote === false ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
+              style="border-color: var(--rojo); color: var(--rojo);"
+              title="Ya no existe"
+            >
+              👎
+            </button>
           </div>
         </div>
       `;
@@ -826,7 +865,10 @@
         lat: reporteCoords.lat,
         lng: reporteCoords.lng,
         uid: currentUser.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        votos: {},
+        score: 0,
+        resuelto: false
       });
 
       showToast('¡Reporte enviado exitosamente!', 'success');
@@ -834,6 +876,45 @@
     } catch (error) {
       console.error('Error al crear reporte:', error);
       showToast('Error al enviar reporte', 'error');
+    }
+  };
+
+  // ============================================
+  // VOTAR REPORTE
+  // ============================================
+  window.votarReporte = async function(reporteId, util) {
+    if (!currentUser) {
+      showToast('Debes iniciar sesión', 'error');
+      return;
+    }
+
+    const uid = currentUser.uid;
+    const ref = doc(db, 'reportes', reporteId);
+
+    try {
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists()) return;
+
+        const data = snap.data();
+        const votos = data.votos || {};
+        votos[uid] = util;
+
+        const valores = Object.values(votos);
+        const utiles = valores.filter(v => v === true).length;
+        const noUtiles = valores.filter(v => v === false).length;
+
+        tx.update(ref, {
+          votos,
+          score: utiles - noUtiles,
+          resuelto: noUtiles >= 3 && noUtiles > utiles
+        });
+      });
+
+      showToast('Voto registrado', 'success');
+    } catch (error) {
+      console.error('Error al votar:', error);
+      showToast('Error al votar', 'error');
     }
   };
 
