@@ -505,7 +505,7 @@
   // ============================================
   // CICLOVÍAS IDU — GeoJSON oficial con caché
   // ============================================
-  const ARCGIS_CICLOVIAS = 'https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/Mapa_Referencia/Mapa_Referencia/MapServer/18/query';
+  const CICLOVIAS_API = '/api/ciclovias';
 
   // CICTSUPERF: tipo de superficie → color
   // 1=Sin dato 2=Mixtos 3=Adoquín concreto 4=Adoquín arcilla 5=Asfalto 6=Concreto
@@ -530,11 +530,11 @@
   ];
 
   async function cargarCicloviasIDU() {
-    const CACHE_KEY = 'ciclovias_geojson_v1';
-    const TIME_KEY  = 'ciclovias_time_v1';
+    const CACHE_KEY = 'ciclovias_geojson_v2';
+    const TIME_KEY  = 'ciclovias_time_v2';
     const TTL       = 86400000; // 24 h
 
-    // Leer caché
+    // Leer caché local
     try {
       const t = localStorage.getItem(TIME_KEY);
       if (t && (Date.now() - Number(t)) < TTL) {
@@ -543,24 +543,13 @@
       }
     } catch (_) {}
 
-    // Fetch paginado (1 000 features por página)
-    const features = [];
-    let offset = 0;
-    while (true) {
-      const url  = `${ARCGIS_CICLOVIAS}?where=1%3D1&outFields=CICTSUPERF&f=geojson&resultRecordCount=1000&resultOffset=${offset}`;
-      const res  = await fetch(url, { signal: AbortSignal.timeout(12000) });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      if (!data.features?.length) break;
-      features.push(...data.features);
-      if (!data.exceededTransferLimit) break;
-      offset += 1000;
-      if (offset > 20000) break; // tope de seguridad
-    }
+    // Fetch a través del proxy Vercel (sin CORS)
+    const res = await fetch(CICLOVIAS_API);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const geojson = await res.json();
+    if (!geojson.features?.length) throw new Error('sin features');
 
-    const geojson = { type: 'FeatureCollection', features };
-
-    // Guardar caché (silencioso si está lleno)
+    // Guardar caché local
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify(geojson));
       localStorage.setItem(TIME_KEY, String(Date.now()));
