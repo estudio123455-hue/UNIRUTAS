@@ -863,7 +863,7 @@
         lat: reporteCoords.lat,
         lng: reporteCoords.lng,
         localidad: localidadDetectada || '',
-        uid: currentUser.uid,
+        autorUid: currentUser.uid,
         createdAt: serverTimestamp(),
         votos: {},
         score: 0,
@@ -871,6 +871,15 @@
       });
 
       showToast('¡Reporte enviado!', 'success');
+
+      // Feature 11: registrar evento de actividad
+      addDoc(collection(db, 'actividad', currentUser.uid, 'eventos'), {
+        tipo:      'reporte',
+        icono:     '⚠️',
+        texto:     `Reporte: ${tipoSeleccionado}${localidadDetectada ? ' · ' + localidadDetectada : ''}`,
+        timestamp: serverTimestamp()
+      }).catch(() => {});
+
       cerrarSheet();
     } catch (err) {
       console.error('Error al crear reporte:', err);

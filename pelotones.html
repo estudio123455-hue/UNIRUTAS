@@ -148,6 +148,23 @@
       margin-top: 4px;
     }
 
+    /* Badge de estado del pelotón */
+    .estado-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: 12px;
+      font-size: 0.7rem; font-weight: 600;
+    }
+    .estado-badge.activo    { background: #d1fae5; color: #065f46; }
+    .estado-badge.en_camino { background: #fef3c7; color: #92400e; }
+    .estado-badge.terminado { background: var(--gris-100); color: var(--gris-500); }
+
+    .btn-estado {
+      font-size: 0.72rem; padding: 3px 9px; border-radius: 8px;
+      border: 1px solid var(--gris-200); background: var(--gris-50);
+      color: var(--gris-600); cursor: pointer; transition: background 0.15s;
+    }
+    .btn-estado:hover { background: var(--gris-100); }
+
     /* Lista de pelotones */
     .pelotones-list {
       padding: 16px 20px;
@@ -947,12 +964,22 @@
         ? ` · ${haversine(userLat, userLng, p.lat, p.lng).toFixed(1)} km`
         : '';
 
+      const esLider = currentUser && p.lider === currentUser.uid;
+      const estado  = p.estado || 'activo';
+      const estadoLabel = { activo: '🟢 Activo', en_camino: '🟡 En camino', terminado: '⚫ Terminado' }[estado] || '🟢 Activo';
+
+      // Ocultar pelotones terminados a menos que el usuario sea el líder
+      if (estado === 'terminado' && !esLider) return '';
+
       return `
         <div class="peloton-card">
           <div class="peloton-header">
             <div class="avatar">${iniciales}</div>
             <div class="peloton-info">
-              <div class="lider-nombre">${p.liderNombre || 'Sin nombre'}</div>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <span class="lider-nombre">${p.liderNombre || 'Sin nombre'}</span>
+                <span class="estado-badge ${estado}">${estadoLabel}</span>
+              </div>
               <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px">
                 <div class="vehiculo-badge ${p.vehiculo}">
                   ${vehiculoIcon} ${p.vehiculo.charAt(0).toUpperCase() + p.vehiculo.slice(1)}
@@ -960,6 +987,12 @@
                 ${p.localidad ? `<div class="localidad-badge">📍 ${p.localidad}${distText}</div>` : ''}
               </div>
             </div>
+            ${esLider ? `
+              <select class="btn-estado" onchange="cambiarEstadoPeloton('${p.id}', this.value)" title="Cambiar estado">
+                <option value="activo"    ${estado==='activo'    ? 'selected':''}>🟢 Activo</option>
+                <option value="en_camino" ${estado==='en_camino' ? 'selected':''}>🟡 En camino</option>
+                <option value="terminado" ${estado==='terminado' ? 'selected':''}>⚫ Terminado</option>
+              </select>` : ''}
           </div>
 
           <div class="ruta">
@@ -999,8 +1032,27 @@
           </div>
         </div>
       `;
-    }).join('');
+    }).filter(Boolean).join('');
+
+    if (!container.innerHTML.trim()) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+          </svg>
+          <h3>No hay pelotones activos</h3>
+          <p>Prueba con otros filtros o crea uno</p>
+        </div>`;
+    }
   }
+
+  window.cambiarEstadoPeloton = async function(id, nuevoEstado) {
+    try {
+      await updateDoc(doc(db, 'pelotones', id), { estado: nuevoEstado });
+    } catch {
+      showToast('Error al cambiar estado', 'error');
+    }
+  };
 
   function estimarDuracion(vehiculo) {
     const duraciones = { bicicleta: '25 min', patineta: '20 min', pie: '35 min' };
@@ -1017,6 +1069,15 @@
         participantes: arrayUnion(currentUser.uid)
       });
       showToast('¡Te has unido al pelotón!', 'success');
+
+      // Feature 11: registrar evento de actividad
+      const p = pelotonesData.find(x => x.id === id);
+      addDoc(collection(db, 'actividad', currentUser.uid, 'eventos'), {
+        tipo:      'peloton',
+        icono:     '🚴',
+        texto:     p ? `Unido a pelotón: ${p.origen} → ${p.destino}` : 'Unido a un pelotón',
+        timestamp: serverTimestamp()
+      }).catch(() => {});
     } catch (error) {
       showToast('Error al unirte', 'error');
     }
@@ -1251,7 +1312,8 @@
         participantes: [currentUser.uid],
         lat: origenCoords.lat,
         lng: origenCoords.lng,
-        createdAt: new Date()
+        estado: 'activo',
+        createdAt: serverTimestamp()
       });
 
       showToast('¡Pelotón creado exitosamente!', 'success');

@@ -50,7 +50,8 @@
 
         <div class="form-group">
           <label class="form-label" for="email">Correo electrónico</label>
-          <input class="form-input" type="email" id="email" placeholder="tu@correo.com" autocomplete="email" required>
+          <input class="form-input" type="email" id="email" placeholder="tu@correo.com" autocomplete="email" required oninput="mostrarHintEmail(this.value)">
+          <span id="email-uni-hint" style="display:none;font-size:12px;color:#065f46;margin-top:4px">✓ Correo universitario detectado — obtendrás una insignia verificada</span>
           <span class="form-error" id="email-error">Ingresa un correo válido</span>
         </div>
 
@@ -229,11 +230,36 @@
   // ---- Helpers ----
   function sanitize(str, max = 100) { return str.trim().replace(/[<>]/g, '').slice(0, max); }
   function validarEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+  // Feature 12: dominios universitarios colombianos
+  const DOMINIOS_UNIVERSITARIOS = [
+    'unal.edu.co','uniandes.edu.co','javeriana.edu.co','rosario.edu.co',
+    'udistrital.edu.co','pedagogica.edu.co','uexternado.edu.co','unilibrebog.edu.co',
+    'unisabana.edu.co','ean.edu.co','lasalle.edu.co','usta.edu.co',
+    'uamerica.edu.co','utadeo.edu.co','piloto.edu.co','ucc.edu.co',
+    'konradlorenz.edu.co','udca.edu.co','uniminuto.edu','uniminuto.edu.co',
+    'unilibre.edu.co','umbeltrán.edu.co','ulibertadores.edu.co',
+    'unimonserrate.edu.co','inpahu.edu.co','incca.edu.co','escuelaing.edu.co',
+    'eia.edu.co','unbosque.edu.co','ces.edu.co','poligran.edu.co',
+    'ecci.edu.co','sanmartin.edu.co','uan.edu.co','ucentral.edu.co',
+    'usergioarboleda.edu.co','unad.edu.co','sena.edu.co','militar.edu.co',
+    'unicolmayor.edu.co'
+  ];
+
+  function esEmailUniversitario(email) {
+    const dominio = email.split('@')[1]?.toLowerCase() || '';
+    return DOMINIOS_UNIVERSITARIOS.some(d => dominio === d || dominio.endsWith('.' + d));
+  }
   function mostrarError(id, visible) {
     document.getElementById(id).classList.toggle('visible', visible);
     const campo = document.getElementById(id.replace('-error',''));
     if (campo) campo.classList.toggle('error', visible);
   }
+
+  window.mostrarHintEmail = function(val) {
+    const hint = document.getElementById('email-uni-hint');
+    if (hint) hint.style.display = esEmailUniversitario(val) ? 'block' : 'none';
+  };
 
   // ---- Mostrar/ocultar contraseña ----
   document.getElementById('toggle-pw').addEventListener('click', () => {
@@ -335,6 +361,7 @@
         barrio,
         photoURL: cred.user.photoURL || '',
         verified_email: false,
+        emailUniversitario: esEmailUniversitario(email),
         fechaRegistro: serverTimestamp(),
         createdAt: serverTimestamp(),
         rutasRecorridas: 0,

@@ -9,7 +9,7 @@ service cloud.firestore {
                     && validarUsuario(request.resource.data);
       allow update: if request.auth != null && request.auth.uid == uid
                     && validarUsuario(request.resource.data);
-      allow delete: if false;
+      allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
     // Pelotones: any authenticated user can read; only creator can write
@@ -46,6 +46,13 @@ service cloud.firestore {
       allow read:          if request.auth != null && request.auth.uid == uid;
       allow create, update: if request.auth != null && request.auth.uid == uid;
       allow delete:        if false;
+    }
+
+    // Actividad del usuario: solo él puede leer y escribir sus eventos
+    match /actividad/{uid}/eventos/{eventoId} {
+      allow read:          if request.auth != null && request.auth.uid == uid;
+      allow create:        if request.auth != null && request.auth.uid == uid;
+      allow update, delete: if false;
     }
 
     // Block everything else

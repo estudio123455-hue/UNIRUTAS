@@ -108,6 +108,8 @@
     .capa-btn.active-uni-privada { background: #ede9fe;             border-color: #7c3aed; }
     .capa-btn.active-pelotones   { background: #fff3e0; border-color: #f59e0b; }
     .capa-btn.active-reportes    { background: var(--rojo-light);   border-color: var(--rojo); }
+    .capa-btn.active-transmilenio { background: #fce7f3; border-color: #db2777; }
+    .capa-btn.active-bici-park   { background: #f0fdf4; border-color: #16a34a; }
 
     .capa-tooltip {
       position: absolute;
@@ -385,6 +387,20 @@
     </svg>
     <span class="capa-tooltip">Peligros</span>
   </button>
+  <button class="capa-btn active-transmilenio" id="btn-transmilenio" title="Estaciones TransMilenio">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/>
+      <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+    </svg>
+    <span class="capa-tooltip">TransMilenio</span>
+  </button>
+  <button class="capa-btn active-bici-park" id="btn-bici-park" title="Bici-parqueaderos">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2"/>
+      <path d="M9 17V7h4a3 3 0 010 6H9"/>
+    </svg>
+    <span class="capa-tooltip">Bici-parqueaderos</span>
+  </button>
 </div>
 
 <!-- Leyenda -->
@@ -394,6 +410,8 @@
   <div class="leyenda-item"><div class="leyenda-dot" style="background:#7c3aed"></div> U. Privada</div>
   <div class="leyenda-item"><div class="leyenda-dot" style="background:#f59e0b"></div> Pelotón</div>
   <div class="leyenda-item"><div class="leyenda-dot" style="background:var(--rojo)"></div> Peligro</div>
+  <div class="leyenda-item"><div class="leyenda-dot" style="background:#db2777"></div> TransMilenio</div>
+  <div class="leyenda-item"><div class="leyenda-dot" style="background:#16a34a"></div> Bici-parqueadero</div>
 </div>
 
 <!-- Botón mi ubicación -->
@@ -482,8 +500,21 @@
     </div>
   </div>
 
-  <p style="color:rgba(255,255,255,0.8); margin-bottom:20px; font-size:0.9rem; text-align:center">Quédate en tu lugar.<br>Alguien está en camino.</p>
-  <button class="btn btn-secondary" id="btn-bien" style="width:auto; padding:0 32px; background:rgba(255,255,255,0.2); color:white; border-color:rgba(255,255,255,0.4)">
+  <p style="color:rgba(255,255,255,0.8); margin-bottom:16px; font-size:0.9rem; text-align:center">Quédate en tu lugar.<br>Alguien está en camino.</p>
+  <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px;margin-bottom:16px">
+    <a id="btn-whatsapp-sos"
+       href="https://wa.me/573164267072?text=EMERGENCIA%20UniRutas%3A%20necesito%20ayuda"
+       target="_blank" rel="noopener"
+       style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0;border-radius:10px;background:#25D366;color:white;font-size:14px;font-weight:600;text-decoration:none;border:none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      WhatsApp emergencia
+    </a>
+    <a href="tel:123"
+       style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0;border-radius:10px;background:rgba(255,255,255,0.2);color:white;font-size:14px;font-weight:600;text-decoration:none;border:1.5px solid rgba(255,255,255,0.4)">
+      📞 Línea 123 (emergencias)
+    </a>
+  </div>
+  <button class="btn btn-secondary" id="btn-bien" style="width:auto; padding:0 32px; background:rgba(255,255,255,0.15); color:white; border-color:rgba(255,255,255,0.35)">
     Ya estoy bien
   </button>
 </div>
@@ -495,7 +526,7 @@
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import {
     collection, onSnapshot, query, orderBy, limit,
-    doc, setDoc, arrayUnion
+    doc, setDoc, arrayUnion, updateDoc, increment, addDoc, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { showToast } from './toast.js';
 
@@ -535,7 +566,9 @@
     pelotones:     L.markerClusterGroup().addTo(mapa),
     reportes:      L.markerClusterGroup().addTo(mapa)
   };
-  const capasActivas = { ciclovias: true, 'uni-publica': true, 'uni-privada': true, pelotones: true, reportes: true };
+  capas.transmilenio = L.layerGroup().addTo(mapa);
+  capas['bici-park']  = L.layerGroup().addTo(mapa);
+  const capasActivas = { ciclovias: true, 'uni-publica': true, 'uni-privada': true, pelotones: true, reportes: true, transmilenio: true, 'bici-park': true };
 
   // Centros aproximados de cada localidad de Bogotá
   const LOCALIDAD_COORDS = {
@@ -560,6 +593,94 @@
     "Ciudad Bolívar":    [4.5077, -74.1499],
     "Sumapaz":           [4.0100, -74.2000]
   };
+
+  // ============================================
+  // TRANSMILENIO — Estaciones principales
+  // ============================================
+  const ESTACIONES_TM = [
+    { nombre: 'Portal Norte',       lat: 4.7553, lng: -74.0466 },
+    { nombre: 'Portal Sur',         lat: 4.5657, lng: -74.1302 },
+    { nombre: 'Portal Américas',    lat: 4.6275, lng: -74.1866 },
+    { nombre: 'Portal 80',          lat: 4.6899, lng: -74.1254 },
+    { nombre: 'Portal Suba',        lat: 4.7433, lng: -74.0945 },
+    { nombre: 'Portal El Dorado',   lat: 4.6981, lng: -74.1550 },
+    { nombre: 'Portal Usme',        lat: 4.4979, lng: -74.1289 },
+    { nombre: 'Calle 100',          lat: 4.6888, lng: -74.0573 },
+    { nombre: 'Calle 72',           lat: 4.6601, lng: -74.0558 },
+    { nombre: 'Calle 45',           lat: 4.6386, lng: -74.0621 },
+    { nombre: 'Av. 19',             lat: 4.6267, lng: -74.0636 },
+    { nombre: 'Héroes',             lat: 4.6691, lng: -74.0561 },
+    { nombre: 'Alcalá',             lat: 4.7064, lng: -74.0513 },
+    { nombre: 'Profamilia',         lat: 4.6499, lng: -74.0555 },
+    { nombre: 'NQS - Cl 75',        lat: 4.6641, lng: -74.0926 },
+    { nombre: 'NQS - Cl 30',        lat: 4.6348, lng: -74.0900 },
+    { nombre: 'Ricaurte',           lat: 4.6155, lng: -74.0927 },
+    { nombre: 'General Santander',  lat: 4.6087, lng: -74.0928 },
+    { nombre: 'Banderas',           lat: 4.6317, lng: -74.1451 },
+    { nombre: 'Las Aguas',          lat: 4.6048, lng: -74.0668 },
+    { nombre: 'Universidades',      lat: 4.6356, lng: -74.0838 },
+    { nombre: 'Marly',              lat: 4.6461, lng: -74.0665 },
+    { nombre: 'Paloquemao',         lat: 4.6149, lng: -74.0870 },
+    { nombre: 'Calle 26',           lat: 4.6561, lng: -74.0895 }
+  ];
+
+  const iconoTM = L.divIcon({
+    html: `<div style="width:28px;height:28px;background:#db2777;border-radius:6px;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.2);color:white;font-size:11px;font-weight:700">TM</div>`,
+    iconSize: [28, 28], iconAnchor: [14, 14], className: ''
+  });
+
+  ESTACIONES_TM.forEach(e => {
+    L.marker([e.lat, e.lng], { icon: iconoTM })
+      .bindPopup(`
+        <div style="font-family:Inter,sans-serif;padding:4px;min-width:160px">
+          <strong style="color:#db2777;font-size:13px">🚌 ${e.nombre}</strong><br>
+          <span style="font-size:12px;color:#6b7280">Estación TransMilenio</span>
+        </div>
+      `)
+      .addTo(capas.transmilenio);
+  });
+
+  // ============================================
+  // BICI-PARQUEADEROS — Puntos IDU
+  // ============================================
+  const BICI_PARQUEADEROS = [
+    { nombre: 'Universidad Nacional (Portería Calle 26)', lat: 4.6369, lng: -74.0850 },
+    { nombre: 'Parque El Virrey',                        lat: 4.6701, lng: -74.0540 },
+    { nombre: 'Parque Nacional',                         lat: 4.6340, lng: -74.0640 },
+    { nombre: 'Parque Simón Bolívar',                    lat: 4.6580, lng: -74.0950 },
+    { nombre: 'Centro Comercial Andino',                 lat: 4.6671, lng: -74.0527 },
+    { nombre: 'Estación Calle 100 TM',                   lat: 4.6892, lng: -74.0572 },
+    { nombre: 'Estación Calle 72 TM',                    lat: 4.6601, lng: -74.0555 },
+    { nombre: 'Estación Universidades TM',               lat: 4.6360, lng: -74.0840 },
+    { nombre: 'Palacio de los Deportes',                 lat: 4.6480, lng: -74.0926 },
+    { nombre: 'U. de los Andes (Carrera 1)',             lat: 4.6027, lng: -74.0651 },
+    { nombre: 'U. Javeriana (Portería Carrera 7)',       lat: 4.6282, lng: -74.0643 },
+    { nombre: 'Ciclovía Carrera 7 - Calle 85',          lat: 4.6779, lng: -74.0531 },
+    { nombre: 'Ciclovía Carrera 7 - Calle 60',          lat: 4.6536, lng: -74.0560 },
+    { nombre: 'Terminal de Transporte Norte',            lat: 4.7422, lng: -74.0581 },
+    { nombre: 'Biblioteca El Tintal',                   lat: 4.6322, lng: -74.1721 },
+    { nombre: 'Biblioteca Virgilio Barco',              lat: 4.6583, lng: -74.0929 },
+    { nombre: 'Biblioteca El Tunal',                    lat: 4.5697, lng: -74.1282 },
+    { nombre: 'Corferias',                              lat: 4.6324, lng: -74.0982 },
+    { nombre: 'Usaquén (Carrera 6)',                    lat: 4.6940, lng: -74.0316 },
+    { nombre: 'Av. Calle 26 - Carrera 50',              lat: 4.6559, lng: -74.0958 }
+  ];
+
+  const iconoBiciPark = L.divIcon({
+    html: `<div style="width:26px;height:26px;background:#16a34a;border-radius:6px;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.2);color:white;font-size:13px">🅿</div>`,
+    iconSize: [26, 26], iconAnchor: [13, 13], className: ''
+  });
+
+  BICI_PARQUEADEROS.forEach(b => {
+    L.marker([b.lat, b.lng], { icon: iconoBiciPark })
+      .bindPopup(`
+        <div style="font-family:Inter,sans-serif;padding:4px;min-width:180px">
+          <strong style="color:#16a34a;font-size:13px">🅿 ${b.nombre}</strong><br>
+          <span style="font-size:12px;color:#6b7280">Bici-parqueadero</span>
+        </div>
+      `)
+      .addTo(capas['bici-park']);
+  });
 
   // Capa de burbujas por localidad (se muestra al hacer zoom out)
   const localidadLayer = L.layerGroup();
@@ -1204,6 +1325,27 @@
       // Panel de info de ruta
       mostrarInfoRuta(labelTipo, distKm, minutos, domingo, ruta.legs[0].steps);
 
+      // Feature 7: actualizar estadísticas del usuario
+      const user = auth.currentUser;
+      if (user) {
+        const distNum = parseFloat(distKm);
+        const co2Saved = parseFloat((distNum * 0.21).toFixed(2));
+        const userRef  = doc(db, 'usuarios', user.uid);
+        updateDoc(userRef, {
+          rutasRecorridas: increment(1),
+          distanciaKm:     increment(distNum),
+          co2Kg:           increment(co2Saved)
+        }).catch(() => {});
+
+        // Feature 11: registrar evento de actividad
+        addDoc(collection(db, 'actividad', user.uid, 'eventos'), {
+          tipo:      'ruta',
+          icono:     '🗺️',
+          texto:     `Ruta trazada · ${distKm} km · ${minutos} min`,
+          timestamp: serverTimestamp()
+        }).catch(() => {});
+      }
+
     } catch (err) {
       console.error(err);
       showToast('Error al calcular la ruta', 'danger');
@@ -1241,6 +1383,13 @@
       </div>`;
     }).join('');
 
+    const tmBanner = parseFloat(distKm) > 8
+      ? `<div style="background:#fce7f3;border:1px solid #db2777;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:13px;color:#9d174d;display:flex;align-items:center;gap:8px">
+           <span style="font-size:16px">🚌</span>
+           <span>Ruta larga (${distKm} km). Considera combinar bicicleta + <strong>TransMilenio</strong> para llegar más rápido.</span>
+         </div>`
+      : '';
+
     const llueveBanner = (climaData && climaData.probLluviaProxHora > 60)
       ? `<div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:13px;color:#92400e;display:flex;align-items:center;gap:8px">
            <span style="font-size:16px">🌧</span>
@@ -1249,6 +1398,7 @@
       : '';
 
     panel.innerHTML = `
+      ${tmBanner}
       ${llueveBanner}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div>
@@ -1531,6 +1681,15 @@
     enviado.style.display = 'flex';
     document.getElementById('sos-coords-final').textContent =
       sosLat ? `📍 ${sosLat}, ${sosLng}` : 'Ubicación no disponible';
+
+    // Actualizar link de WhatsApp con coordenadas reales
+    const waBtn = document.getElementById('btn-whatsapp-sos');
+    if (waBtn && sosLat) {
+      const msg = encodeURIComponent(
+        `EMERGENCIA UniRutas: necesito ayuda. Mi ubicación: https://maps.google.com/?q=${sosLat},${sosLng}`
+      );
+      waBtn.href = `https://wa.me/573164267072?text=${msg}`;
+    }
   }
 
   function cerrarSOSEnviado() {
@@ -1544,6 +1703,8 @@
   document.getElementById('btn-uni-privada').addEventListener('click', () => toggleCapa('uni-privada'));
   document.getElementById('btn-pelotones').addEventListener('click', () => toggleCapa('pelotones'));
   document.getElementById('btn-reportes').addEventListener('click', () => toggleCapa('reportes'));
+  document.getElementById('btn-transmilenio').addEventListener('click', () => toggleCapa('transmilenio'));
+  document.getElementById('btn-bici-park').addEventListener('click', () => toggleCapa('bici-park'));
   document.getElementById('btn-ubicacion').addEventListener('click', centrarUbicacion);
   document.getElementById('btn-sos').addEventListener('click', iniciarSOS);
   document.getElementById('btn-cancelar-sos').addEventListener('click', cancelarSOS);

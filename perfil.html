@@ -345,7 +345,10 @@
       <div class="avatar-overlay" aria-hidden="true"><i class="ti ti-camera"></i></div>
     </div>
     <div class="user-info">
-      <div class="user-name" id="displayName"></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="user-name" id="displayName"></div>
+        <span id="badge-uni-verificada" style="display:none;background:#d1fae5;color:#065f46;font-size:10px;font-weight:600;padding:2px 8px;border-radius:12px;">✓ Email uni.</span>
+      </div>
       <div class="user-sub" id="user-sub" style="display:none;">
         <i class="ti ti-building" aria-hidden="true"></i>
         <span id="displayUniversity"></span>
@@ -353,6 +356,8 @@
         <span id="displayCareer"></span>
       </div>
     </div>
+    <!-- Campo oculto para sync con modal -->
+    <span id="contacto-emergencia-val" style="display:none;"></span>
     <div class="edit-btn">
       <button onclick="openModal()">
         <i class="ti ti-edit" aria-hidden="true"></i> Editar perfil
@@ -425,6 +430,37 @@
     </div>
   </div>
 
+  <!-- MIS PELOTONES -->
+  <div class="card">
+    <div class="sec-label">Mis pelotones</div>
+    <div class="route-list" id="mis-pelotones-list">
+      <div style="text-align:center; padding:20px 0; color:var(--color-text-tertiary); font-size:13px;">
+        <i class="ti ti-users" style="font-size:28px; display:block; margin-bottom:8px;" aria-hidden="true"></i>
+        Cargando…
+      </div>
+    </div>
+  </div>
+
+  <!-- MIS REPORTES -->
+  <div class="card">
+    <div class="sec-label">Mis reportes</div>
+    <div class="route-list" id="mis-reportes-list">
+      <div style="text-align:center; padding:20px 0; color:var(--color-text-tertiary); font-size:13px;">
+        <i class="ti ti-alert-triangle" style="font-size:28px; display:block; margin-bottom:8px;" aria-hidden="true"></i>
+        Cargando…
+      </div>
+    </div>
+  </div>
+
+  <!-- SEGURIDAD — eliminar cuenta -->
+  <div class="card">
+    <div class="sec-label">Zona peligrosa</div>
+    <button onclick="iniciarEliminarCuenta()"
+      style="width:100%;padding:10px;border-radius:8px;border:1px solid #fca5a5;background:#fff5f5;color:#b91c1c;font-size:13px;font-weight:500;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px;">
+      <i class="ti ti-trash" aria-hidden="true"></i> Eliminar mi cuenta permanentemente
+    </button>
+  </div>
+
   <!-- CERRAR SESIÓN -->
   <div class="signout-wrap">
     <button class="btn-signout" onclick="abrirConfirmSignOut()">
@@ -483,10 +519,40 @@
       <label class="form-label" for="inputCareer">Carrera / Facultad</label>
       <input class="form-input" type="text" id="inputCareer" value="" placeholder="Tu carrera" />
     </div>
+    <div class="form-group">
+      <label class="form-label" for="inputEmergency">Contacto de emergencia <span style="font-weight:400;color:var(--color-text-tertiary)">(nombre y tel.)</span></label>
+      <input class="form-input" type="text" id="inputEmergency" placeholder="Ej: Mamá · 3001234567" />
+    </div>
 
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
       <button class="btn-save" onclick="saveProfile()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ELIMINAR CUENTA -->
+<div class="modal-overlay" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="deleteTitle" style="color:#b91c1c">Eliminar cuenta</span>
+      <button class="modal-close" onclick="cerrarEliminarCuenta()" aria-label="Cerrar">
+        <i class="ti ti-x" aria-hidden="true"></i>
+      </button>
+    </div>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px;line-height:1.6">
+      Esta acción es <strong>permanente e irreversible</strong>. Se eliminarán tu perfil, foto y todos tus datos de UniRutas.
+    </p>
+    <div class="form-group">
+      <label class="form-label" for="deleteConfirmInput">Escribe <strong>ELIMINAR</strong> para confirmar</label>
+      <input class="form-input" type="text" id="deleteConfirmInput" placeholder="ELIMINAR" autocomplete="off" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="cerrarEliminarCuenta()">Cancelar</button>
+      <button id="btnConfirmDelete" onclick="confirmarEliminarCuenta()"
+        style="padding:8px 18px;border-radius:8px;cursor:pointer;background:#b91c1c;border:none;font-size:13px;color:#fff;font-weight:500;">
+        Eliminar cuenta
+      </button>
     </div>
   </div>
 </div>
@@ -503,6 +569,8 @@
     document.getElementById('inputName').value       = document.getElementById('displayName').textContent;
     document.getElementById('inputUniversity').value = document.getElementById('displayUniversity').textContent;
     document.getElementById('inputCareer').value     = document.getElementById('displayCareer').textContent;
+    const emergEl = document.getElementById('inputEmergency');
+    if (emergEl) emergEl.value = document.getElementById('contacto-emergencia-val')?.textContent || '';
 
     // Sincronizar preview con el avatar actual
     const currentImg      = document.getElementById('avatarImg');
@@ -593,6 +661,9 @@
   document.getElementById('editModal').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
   });
+  document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) cerrarEliminarCuenta();
+  });
 
   // Cerrar confirmación al clicar fuera
   document.getElementById('confirmSignOut').addEventListener('click', function(e) {
@@ -610,12 +681,25 @@
 
 <script type="module">
   import { auth, db, storage } from './firebase.js';
-  import { onAuthStateChanged, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { onAuthStateChanged, updateProfile, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import {
+    doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp,
+    collection, query, where, orderBy, limit, getDocs, addDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
   const VEHICULO_A_ID = { bicicleta: 't-bike', patineta: 't-scooter', pie: 't-walk' };
   const ID_A_VEHICULO = { 't-bike': 'bicicleta', 't-scooter': 'patineta', 't-walk': 'pie' };
+
+  // Feature 14: open/close delete modal (no auth needed)
+  window.iniciarEliminarCuenta = function() {
+    document.getElementById('deleteModal').classList.add('open');
+    document.getElementById('deleteConfirmInput').value = '';
+    document.getElementById('deleteConfirmInput').style.borderColor = '';
+  };
+  window.cerrarEliminarCuenta = function() {
+    document.getElementById('deleteModal').classList.remove('open');
+  };
 
   function calcularIniciales(nombre) {
     return (nombre || 'U').trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
@@ -662,6 +746,14 @@
     document.getElementById('stat-rutas').textContent     = rutas;
     document.getElementById('stat-distancia').textContent = distancia + ' km';
     document.getElementById('stat-co2').textContent       = co2 + ' kg';
+
+    // Feature 6: contacto de emergencia (storage ref para openModal)
+    const ceEl = document.getElementById('contacto-emergencia-val');
+    if (ceEl) ceEl.textContent = datos.contactoEmergencia || '';
+
+    // Feature 12: badge universidad verificada
+    const badgeEl = document.getElementById('badge-uni-verificada');
+    if (badgeEl) badgeEl.style.display = datos.emailUniversitario ? '' : 'none';
   }
 
   function ocultarGuard() {
@@ -714,6 +806,13 @@
 
     poblarDOM(datos);
 
+    // Feature 11: cargar actividad reciente
+    cargarActividad(user.uid);
+
+    // Feature 8: cargar mis pelotones y reportes
+    cargarMisPelotones(user.uid);
+    cargarMisReportes(user.uid);
+
     document.getElementById('btnConfirmSignOut').addEventListener('click', async () => {
       try {
         await signOut(auth);
@@ -757,10 +856,11 @@
           window.pendingPhoto = null;
         }
 
-        await updateDoc(ref, { nombre, universidad, carrera, vehiculo, photoURL: newPhotoURL });
+        const contactoEmergencia = sanitize(document.getElementById('inputEmergency').value, 120);
+        await updateDoc(ref, { nombre, universidad, carrera, vehiculo, photoURL: newPhotoURL, contactoEmergencia });
         await updateProfile(user, { displayName: nombre, photoURL: newPhotoURL });
 
-        datos = { ...datos, nombre, universidad, carrera, vehiculo, photoURL: newPhotoURL };
+        datos = { ...datos, nombre, universidad, carrera, vehiculo, photoURL: newPhotoURL, contactoEmergencia };
         poblarDOM(datos);
         syncPreviewToMain(false);
         closeModal();
@@ -772,6 +872,127 @@
         btnSave.textContent = textoOriginal;
       }
     };
+
+    // Feature 11: cargar actividad reciente
+    async function cargarActividad(uid) {
+      const el = document.getElementById('activity-list');
+      if (!el) return;
+      try {
+        const q = query(
+          collection(db, 'actividad', uid, 'eventos'),
+          orderBy('timestamp', 'desc'),
+          limit(5)
+        );
+        const snap = await getDocs(q);
+        if (snap.empty) return;
+        const ahora = Date.now();
+        el.innerHTML = snap.docs.map(d => {
+          const ev   = d.data();
+          const ts   = ev.timestamp?.toDate?.() || new Date();
+          const diff = Math.round((ahora - ts) / 60000);
+          const tiempo = diff < 1 ? 'ahora' : diff < 60 ? `hace ${diff} min` : diff < 1440 ? `hace ${Math.round(diff/60)} h` : `hace ${Math.round(diff/1440)} d`;
+          return `
+            <div class="activity-item">
+              <span class="act-icon">${ev.icono || '📌'}</span>
+              <span class="act-text">${ev.texto || ''}</span>
+              <span class="act-time">${tiempo}</span>
+            </div>`;
+        }).join('');
+      } catch (err) {
+        console.warn('Actividad no disponible:', err.message);
+      }
+    }
+
+    // Feature 8: mis pelotones (participante)
+    async function cargarMisPelotones(uid) {
+      const el = document.getElementById('mis-pelotones-list');
+      if (!el) return;
+      try {
+        const q    = query(collection(db, 'pelotones'), where('participantes', 'array-contains', uid), limit(5));
+        const snap = await getDocs(q);
+        if (snap.empty) { el.innerHTML = '<p style="font-size:13px;color:var(--color-text-tertiary);text-align:center;padding:12px 0">Sin pelotones aún</p>'; return; }
+        el.innerHTML = snap.docs.map(d => {
+          const p = d.data();
+          const esLider = p.lider === uid;
+          return `<div class="route-item">
+            <div class="route-dot" style="background:${esLider ? '#f59e0b' : 'var(--color-green-mid)'}"></div>
+            <div class="route-info">
+              <div class="route-name">${p.origen || '—'} → ${p.destino || '—'}</div>
+              <div class="route-meta">${esLider ? '👑 Líder' : '🚴 Participante'} · ${p.horaSalida || ''}</div>
+            </div>
+            <span class="route-tag ${esLider ? 'tag-fast' : 'tag-safe'}">${esLider ? 'Líder' : 'Miembro'}</span>
+          </div>`;
+        }).join('');
+      } catch (err) {
+        console.warn('Pelotones no disponibles:', err.message);
+      }
+    }
+
+    // Feature 8: mis reportes
+    async function cargarMisReportes(uid) {
+      const el = document.getElementById('mis-reportes-list');
+      if (!el) return;
+      try {
+        const q    = query(collection(db, 'reportes'), where('autorUid', '==', uid), orderBy('createdAt', 'desc'), limit(5));
+        const snap = await getDocs(q);
+        if (snap.empty) { el.innerHTML = '<p style="font-size:13px;color:var(--color-text-tertiary);text-align:center;padding:12px 0">Sin reportes aún</p>'; return; }
+        const iconos = { hueco:'🕳️', inundacion:'🌊', sospechoso:'👤', otro:'⚠️' };
+        el.innerHTML = snap.docs.map(d => {
+          const r = d.data();
+          const ts = r.createdAt?.toDate?.();
+          const fecha = ts ? ts.toLocaleDateString('es-CO') : '';
+          return `<div class="route-item">
+            <div style="font-size:20px;flex-shrink:0">${iconos[r.tipo] || '⚠️'}</div>
+            <div class="route-info">
+              <div class="route-name">${r.descripcion || r.tipo || 'Reporte'}</div>
+              <div class="route-meta">${r.localidad ? '📍 '+r.localidad+' · ' : ''}${fecha}</div>
+            </div>
+            <span class="route-tag tag-bike">${r.tipo || 'otro'}</span>
+          </div>`;
+        }).join('');
+      } catch (err) {
+        console.warn('Reportes no disponibles:', err.message);
+      }
+    }
+
+    // Feature 14: eliminar cuenta (confirmar — necesita user)
+    window.confirmarEliminarCuenta = async function() {
+      const val = document.getElementById('deleteConfirmInput').value.trim();
+      if (val !== 'ELIMINAR') {
+        document.getElementById('deleteConfirmInput').style.borderColor = '#dc2626';
+        return;
+      }
+      const btn = document.getElementById('btnConfirmDelete');
+      btn.disabled = true;
+      btn.textContent = 'Eliminando…';
+      try {
+        // Borrar Firestore doc
+        await deleteDoc(doc(db, 'usuarios', user.uid));
+        // Intentar borrar foto de Storage (silencioso si no existe)
+        try {
+          const { deleteObject } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js");
+          await deleteObject(storageRef(storage, `avatares/${user.uid}`));
+        } catch (_) {}
+        // Borrar usuario Auth
+        await deleteUser(user);
+        window.location.href = 'registro.html';
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Eliminar cuenta';
+        if (err.code === 'auth/requires-recent-login') {
+          showToastFn('Vuelve a iniciar sesión antes de eliminar tu cuenta');
+        }
+        console.error(err);
+      }
+    };
+
+    function showToastFn(msg) {
+      const t = document.getElementById('toast');
+      t.querySelector('i')?.remove?.();
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
   });
 </script>
 </body>
