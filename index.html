@@ -503,48 +503,105 @@
   const capasActivas = { ciclovias: true, universidades: true, pelotones: true, reportes: true };
 
   // ============================================
-  // CICLOVÍAS DE BOGOTÁ (coordenadas reales)
+  // CICLOVÍAS IDU — GeoJSON oficial con caché
   // ============================================
-  const ciclovias = [
-    {
-      nombre: "Ciclovía Carrera 7",
-      coords: [[4.6590,-74.0563],[4.6700,-74.0563],[4.6900,-74.0553],[4.7100,-74.0540],[4.7300,-74.0530]]
-    },
-    {
-      nombre: "Ciclovía Avenida El Dorado (Calle 26)",
-      coords: [[4.6560,-74.1050],[4.6558,-74.0900],[4.6555,-74.0750],[4.6553,-74.0600],[4.6550,-74.0500]]
-    },
-    {
-      nombre: "Ciclovía Calle 100",
-      coords: [[4.6860,-74.0900],[4.6862,-74.0750],[4.6864,-74.0600],[4.6866,-74.0450]]
-    },
-    {
-      nombre: "Ciclovía Av. NQS",
-      coords: [[4.6350,-74.0910],[4.6500,-74.0905],[4.6700,-74.0900],[4.6900,-74.0895]]
-    },
-    {
-      nombre: "Ciclovía Eje Ambiental (Av. Jiménez)",
-      coords: [[4.6015,-74.0750],[4.6015,-74.0700],[4.6013,-74.0650],[4.6012,-74.0600]]
-    },
-    {
-      nombre: "Ciclovía Av. Suba",
-      coords: [[4.7200,-74.0850],[4.7220,-74.0750],[4.7240,-74.0650],[4.7260,-74.0550]]
-    }
+  const ARCGIS_CICLOVIAS = 'https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/Mapa_Referencia/Mapa_Referencia/MapServer/18/query';
+
+  // CICTSUPERF: tipo de superficie → color
+  // 1=Sin dato 2=Mixtos 3=Adoquín concreto 4=Adoquín arcilla 5=Asfalto 6=Concreto
+  const SURF_COLOR = {
+    5: { color: '#1d9e75', label: 'Asfalto' },
+    6: { color: '#1d9e75', label: 'Concreto' },
+    3: { color: '#2bb385', label: 'Adoquín concreto' },
+    4: { color: '#2bb385', label: 'Adoquín arcilla' },
+    2: { color: '#0f8060', label: 'Mixtos' },
+    1: { color: '#6ec6a8', label: 'Sin dato' }
+  };
+  const SURF_DEFAULT = { color: '#1d9e75', label: 'Ciclovía' };
+
+  // Fallback hardcodeado (se usa si el fetch falla)
+  const CICLOVIAS_FALLBACK = [
+    { nombre: 'Ciclovía Carrera 7',            coords: [[4.6590,-74.0563],[4.6700,-74.0563],[4.6900,-74.0553],[4.7100,-74.0540],[4.7300,-74.0530]] },
+    { nombre: 'Ciclovía Av. El Dorado (Cl 26)',coords: [[4.6560,-74.1050],[4.6558,-74.0900],[4.6555,-74.0750],[4.6553,-74.0600],[4.6550,-74.0500]] },
+    { nombre: 'Ciclovía Calle 100',             coords: [[4.6860,-74.0900],[4.6862,-74.0750],[4.6864,-74.0600],[4.6866,-74.0450]] },
+    { nombre: 'Ciclovía Av. NQS',               coords: [[4.6350,-74.0910],[4.6500,-74.0905],[4.6700,-74.0900],[4.6900,-74.0895]] },
+    { nombre: 'Ciclovía Eje Ambiental',         coords: [[4.6015,-74.0750],[4.6015,-74.0700],[4.6013,-74.0650],[4.6012,-74.0600]] },
+    { nombre: 'Ciclovía Av. Suba',              coords: [[4.7200,-74.0850],[4.7220,-74.0750],[4.7240,-74.0650],[4.7260,-74.0550]] }
   ];
 
-  ciclovias.forEach(c => {
-    L.polyline(c.coords, {
-      color: '#1d9e75',
-      weight: 4,
-      opacity: 0.8,
-      dashArray: null
-    }).bindPopup(`
-      <div style="font-family:Inter,sans-serif; padding:4px">
-        <strong style="color:#0f6e56">${c.nombre}</strong><br>
-        <span style="font-size:12px; color:#6b7280">Ciclovía oficial</span>
-      </div>
-    `).addTo(capas.ciclovias);
-  });
+  async function cargarCicloviasIDU() {
+    const CACHE_KEY = 'ciclovias_geojson_v1';
+    const TIME_KEY  = 'ciclovias_time_v1';
+    const TTL       = 86400000; // 24 h
+
+    // Leer caché
+    try {
+      const t = localStorage.getItem(TIME_KEY);
+      if (t && (Date.now() - Number(t)) < TTL) {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (raw) return JSON.parse(raw);
+      }
+    } catch (_) {}
+
+    // Fetch paginado (1 000 features por página)
+    const features = [];
+    let offset = 0;
+    while (true) {
+      const url  = `${ARCGIS_CICLOVIAS}?where=1%3D1&outFields=CICTSUPERF&f=geojson&resultRecordCount=1000&resultOffset=${offset}`;
+      const res  = await fetch(url, { signal: AbortSignal.timeout(12000) });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (!data.features?.length) break;
+      features.push(...data.features);
+      if (!data.exceededTransferLimit) break;
+      offset += 1000;
+      if (offset > 20000) break; // tope de seguridad
+    }
+
+    const geojson = { type: 'FeatureCollection', features };
+
+    // Guardar caché (silencioso si está lleno)
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(geojson));
+      localStorage.setItem(TIME_KEY, String(Date.now()));
+    } catch (_) {}
+
+    return geojson;
+  }
+
+  function renderizarCicloviasIDU(geojson) {
+    L.geoJSON(geojson, {
+      style: (feature) => {
+        const s = SURF_COLOR[feature.properties?.CICTSUPERF] ?? SURF_DEFAULT;
+        return { color: s.color, weight: 3, opacity: 0.85 };
+      },
+      onEachFeature: (feature, layer) => {
+        const s = SURF_COLOR[feature.properties?.CICTSUPERF] ?? SURF_DEFAULT;
+        layer.bindPopup(`
+          <div style="font-family:Inter,sans-serif; padding:4px">
+            <strong style="color:#0f6e56">Ciclovía oficial IDU</strong><br>
+            <span style="font-size:12px; color:#6b7280">Superficie: ${s.label}</span>
+          </div>
+        `);
+      }
+    }).addTo(capas.ciclovias);
+  }
+
+  function usarCicloviasFallback() {
+    CICLOVIAS_FALLBACK.forEach(c => {
+      L.polyline(c.coords, { color: '#1d9e75', weight: 4, opacity: 0.8 })
+        .bindPopup(`<div style="font-family:Inter,sans-serif;padding:4px"><strong style="color:#0f6e56">${c.nombre}</strong><br><span style="font-size:12px;color:#6b7280">Ciclovía oficial</span></div>`)
+        .addTo(capas.ciclovias);
+    });
+  }
+
+  // Iniciar carga (fallback automático si falla)
+  cargarCicloviasIDU()
+    .then(renderizarCicloviasIDU)
+    .catch(() => {
+      console.warn('[UniRutas] Ciclovías IDU no disponibles, usando fallback local');
+      usarCicloviasFallback();
+    });
 
   // ============================================
   // UNIVERSIDADES DE BOGOTÁ
