@@ -15,11 +15,16 @@
 
     #mapa {
       position: fixed;
-      inset: 0;
-      bottom: 64px;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 68px;
       z-index: 0;
-      height: calc(100vh - 64px);
-      width: 100%;
+    }
+
+    .leaflet-container {
+      width: 100% !important;
+      height: 100% !important;
     }
 
     /* Header flotante */
@@ -165,7 +170,7 @@
     /* Bottom sheet de pelotón / reporte */
     .bottom-sheet {
       position: fixed;
-      bottom: 64px; left: 0; right: 0;
+      bottom: 68px; left: 0; right: 0;
       z-index: 80;
       background: var(--blanco);
       border-radius: var(--radio-xl) var(--radio-xl) 0 0;
@@ -424,10 +429,10 @@
     maxZoom: 19
   }).addTo(mapa);
 
-  // Force map size recalculation
-  setTimeout(() => {
-    mapa.invalidateSize();
-  }, 300);
+  // Recalcular tamaño al cargar, rotar pantalla o redimensionar
+  setTimeout(() => mapa.invalidateSize(), 300);
+  window.addEventListener('resize', () => mapa.invalidateSize());
+  window.addEventListener('orientationchange', () => setTimeout(() => mapa.invalidateSize(), 300));
 
   // Grupos de capas
   const capas = {
