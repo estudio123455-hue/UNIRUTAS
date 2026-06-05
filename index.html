@@ -259,6 +259,20 @@
       flex-shrink: 0;
     }
 
+    /* Marcador de posición del usuario */
+    .user-dot {
+      width: 16px; height: 16px;
+      background: #2563eb;
+      border-radius: 50%;
+      border: 3px solid white;
+      animation: pulse-ring 2s ease-out infinite;
+    }
+    @keyframes pulse-ring {
+      0%   { box-shadow: 0 0 0 0   rgba(37,99,235,0.50); }
+      70%  { box-shadow: 0 0 0 14px rgba(37,99,235,0);   }
+      100% { box-shadow: 0 0 0 0   rgba(37,99,235,0);    }
+    }
+
     /* Leaflet overrides */
     .leaflet-control-zoom { border-radius: var(--radio-md) !important; border: 1px solid var(--gris-200) !important; box-shadow: var(--sombra-sm) !important; }
     .leaflet-control-zoom a { border-radius: 0 !important; color: var(--gris-600) !important; }
@@ -422,8 +436,8 @@
   // ============================================
   // MAPA
   // ============================================
-  const BOGOTA = [4.7110, -74.0721];
-  const mapa = L.map('mapa', { zoomControl: true, attributionControl: false }).setView(BOGOTA, 13);
+  const COLOMBIA = [4.0, -72.0];
+  const mapa = L.map('mapa', { zoomControl: true, attributionControl: false }).setView(COLOMBIA, 6);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
@@ -632,26 +646,61 @@
   }
 
   // ============================================
-  // MI UBICACIÓN
+  // MI UBICACIÓN EN TIEMPO REAL
   // ============================================
-  let marcadorUsuario = null;
-  function centrarUbicacion() {
-    if (!navigator.geolocation) { showToast('Tu navegador no soporta geolocalización', 'warning'); return; }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        mapa.setView([lat, lng], 16);
-        if (marcadorUsuario) mapa.removeLayer(marcadorUsuario);
-        marcadorUsuario = L.marker([lat, lng], {
-          icon: L.divIcon({
-            html: `<div style="width:16px;height:16px;background:#2563eb;border-radius:50%;border:3px solid white;box-shadow:0 0 0 4px rgba(37,99,235,0.25)"></div>`,
-            iconSize: [16, 16], iconAnchor: [8, 8], className: ''
-          })
-        }).addTo(mapa);
-      },
-      () => showToast('No se pudo obtener tu ubicación', 'warning')
+  let marcadorUsuario  = null;
+  let circuloUsuario   = null;
+  let ultimaPosicion   = null;
+  let primeraUbicacion = true;
+
+  const iconoUsuario = L.divIcon({
+    html: `<div class="user-dot"></div>`,
+    iconSize: [16, 16], iconAnchor: [8, 8], className: ''
+  });
+
+  function actualizarPosicion(pos) {
+    const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+    ultimaPosicion = [lat, lng];
+
+    if (marcadorUsuario) {
+      marcadorUsuario.setLatLng([lat, lng]);
+      circuloUsuario.setLatLng([lat, lng]).setRadius(accuracy);
+    } else {
+      marcadorUsuario = L.marker([lat, lng], { icon: iconoUsuario, zIndexOffset: 1000 }).addTo(mapa);
+      circuloUsuario  = L.circle([lat, lng], {
+        radius: accuracy, color: '#2563eb',
+        fillColor: '#2563eb', fillOpacity: 0.08, weight: 1
+      }).addTo(mapa);
+    }
+
+    if (primeraUbicacion) {
+      mapa.setView([lat, lng], 15);
+      primeraUbicacion = false;
+    }
+  }
+
+  function iniciarGeolocalizacion() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.watchPosition(
+      actualizarPosicion,
+      (err) => { if (err.code !== 1) showToast('No se pudo obtener tu ubicación', 'warning'); },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
     );
   }
+
+  function centrarUbicacion() {
+    if (ultimaPosicion) {
+      mapa.setView(ultimaPosicion, 16);
+    } else if (!navigator.geolocation) {
+      showToast('Tu navegador no soporta geolocalización', 'warning');
+    } else {
+      primeraUbicacion = true;
+      iniciarGeolocalizacion();
+    }
+  }
+
+  // Iniciar seguimiento automático al cargar
+  iniciarGeolocalizacion();
 
   // ============================================
   // BÚSQUEDA
