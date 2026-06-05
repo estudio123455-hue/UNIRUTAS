@@ -529,5 +529,77 @@
     if (e.target === this) closeModal();
   });
 </script>
+
+<script type="module">
+  import { auth, db } from './firebase.js';
+  import { onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const VEHICULO_A_ID = { bicicleta: 't-bike', patineta: 't-scooter', pie: 't-walk' };
+  const ID_A_VEHICULO = { 't-bike': 'bicicleta', 't-scooter': 'patineta', 't-walk': 'pie' };
+
+  function calcularIniciales(nombre) {
+    return (nombre || 'U').trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  }
+
+  function poblarDOM(datos) {
+    const nombre = datos.nombre || 'Usuario';
+    const iniciales = calcularIniciales(nombre);
+
+    document.getElementById('displayName').textContent = nombre;
+    document.getElementById('avatarInitials').textContent = iniciales;
+    document.getElementById('previewInitials').textContent = iniciales;
+    document.getElementById('displayUniversity').textContent = datos.universidad || '';
+    document.getElementById('displayCareer').textContent = datos.barrio || '';
+
+    ['t-bike', 't-scooter', 't-walk'].forEach(t => document.getElementById(t)?.classList.remove('active'));
+    const idVehiculo = VEHICULO_A_ID[datos.vehiculo] || 't-bike';
+    document.getElementById(idVehiculo)?.classList.add('active');
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+
+    const ref = doc(db, 'usuarios', user.uid);
+    const snap = await getDoc(ref);
+
+    let datos;
+    if (snap.exists()) {
+      datos = snap.data();
+    } else {
+      datos = {
+        nombre: user.displayName || 'Usuario',
+        correo: user.email || '',
+        universidad: '',
+        barrio: '',
+        vehiculo: 'bicicleta',
+        verified_email: user.emailVerified || false,
+        createdAt: serverTimestamp()
+      };
+      await setDoc(ref, datos);
+    }
+
+    poblarDOM(datos);
+
+    window.saveProfile = async function() {
+      const nombre    = document.getElementById('inputName').value.trim() || 'Usuario';
+      const universidad = document.getElementById('inputUniversity').value.trim();
+      const barrio    = document.getElementById('inputCareer').value.trim();
+      const activeEl  = document.querySelector('.transport-card.active');
+      const vehiculo  = activeEl ? (ID_A_VEHICULO[activeEl.id] || 'bicicleta') : 'bicicleta';
+
+      try {
+        await updateDoc(ref, { nombre, universidad, barrio, vehiculo });
+        await updateProfile(user, { displayName: nombre });
+        poblarDOM({ nombre, universidad, barrio, vehiculo });
+        syncPreviewToMain(true);
+        closeModal();
+        showToast();
+      } catch (err) {
+        console.error('Error guardando perfil:', err);
+      }
+    };
+  });
+</script>
 </body>
 </html>
