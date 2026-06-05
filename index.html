@@ -437,7 +437,7 @@
   // MAPA
   // ============================================
   const COLOMBIA = [4.0, -72.0];
-  const mapa = L.map('mapa', { zoomControl: true, attributionControl: false }).setView(COLOMBIA, 6);
+  const mapa = L.map('mapa', { zoomControl: false, attributionControl: false }).setView(COLOMBIA, 6);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
