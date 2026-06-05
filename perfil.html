@@ -538,9 +538,25 @@
   let pendingPhoto = null;
 
   function openModal() {
-    document.getElementById('inputName').value = document.getElementById('displayName').textContent;
+    document.getElementById('inputName').value       = document.getElementById('displayName').textContent;
     document.getElementById('inputUniversity').value = document.getElementById('displayUniversity').textContent;
-    document.getElementById('inputCareer').value = document.getElementById('displayCareer').textContent;
+    document.getElementById('inputCareer').value     = document.getElementById('displayCareer').textContent;
+
+    // Sincronizar preview con el avatar actual
+    const currentImg      = document.getElementById('avatarImg');
+    const previewImg      = document.getElementById('previewImg');
+    const previewInitials = document.getElementById('previewInitials');
+    if (currentImg && currentImg.style.display !== 'none' && currentImg.src) {
+      previewImg.src              = currentImg.src;
+      previewImg.style.display    = 'block';
+      previewInitials.style.display = 'none';
+    } else {
+      previewImg.src              = '';
+      previewImg.style.display    = 'none';
+      previewInitials.style.display = 'block';
+      previewInitials.textContent = document.getElementById('avatarInitials').textContent;
+    }
+
     document.getElementById('editModal').classList.add('open');
   }
 
@@ -631,9 +647,10 @@
 </script>
 
 <script type="module">
-  import { auth, db } from './firebase.js';
+  import { auth, db, storage } from './firebase.js';
   import { onAuthStateChanged, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
   const VEHICULO_A_ID = { bicicleta: 't-bike', patineta: 't-scooter', pie: 't-walk' };
   const ID_A_VEHICULO = { 't-bike': 'bicicleta', 't-scooter': 'patineta', 't-walk': 'pie' };
@@ -741,6 +758,15 @@
       }
     });
 
+    function base64ToBlob(base64) {
+      const [meta, data] = base64.split(',');
+      const mime = meta.match(/:(.*?);/)[1];
+      const bytes = atob(data);
+      const arr = new Uint8Array(bytes.length);
+      for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+      return new Blob([arr], { type: mime });
+    }
+
     window.saveProfile = async function() {
       const nombre      = document.getElementById('inputName').value.trim() || 'Usuario';
       const universidad = document.getElementById('inputUniversity').value.trim();
@@ -748,15 +774,35 @@
       const activeEl    = document.querySelector('.transport-card.active');
       const vehiculo    = activeEl ? (ID_A_VEHICULO[activeEl.id] || 'bicicleta') : 'bicicleta';
 
+      const btnSave = document.querySelector('.btn-save');
+      const textoOriginal = btnSave.textContent;
+      btnSave.disabled = true;
+      btnSave.textContent = 'Guardando…';
+
       try {
-        await updateDoc(ref, { nombre, universidad, carrera, vehiculo });
-        await updateProfile(user, { displayName: nombre });
-        poblarDOM({ ...datos, nombre, universidad, carrera, vehiculo });
-        syncPreviewToMain(true);
+        let newPhotoURL = datos.photoURL || '';
+
+        if (window.pendingPhoto) {
+          const blob    = base64ToBlob(window.pendingPhoto);
+          const fotoRef = storageRef(storage, `avatares/${user.uid}`);
+          await uploadBytes(fotoRef, blob);
+          newPhotoURL = await getDownloadURL(fotoRef);
+          window.pendingPhoto = null;
+        }
+
+        await updateDoc(ref, { nombre, universidad, carrera, vehiculo, photoURL: newPhotoURL });
+        await updateProfile(user, { displayName: nombre, photoURL: newPhotoURL });
+
+        datos = { ...datos, nombre, universidad, carrera, vehiculo, photoURL: newPhotoURL };
+        poblarDOM(datos);
+        syncPreviewToMain(false);
         closeModal();
         showToast();
       } catch (err) {
         console.error('Error guardando perfil:', err);
+      } finally {
+        btnSave.disabled = false;
+        btnSave.textContent = textoOriginal;
       }
     };
   });
