@@ -346,17 +346,17 @@
     <div class="stats-grid">
       <div class="stat-card">
         <i class="ti ti-route" aria-hidden="true" style="font-size:18px; color:var(--color-text-tertiary);"></i>
-        <div class="stat-val">142</div>
+        <div class="stat-val" id="stat-rutas">0</div>
         <div class="stat-lbl">Rutas recorridas</div>
       </div>
       <div class="stat-card">
         <i class="ti ti-road" aria-hidden="true" style="font-size:18px; color:var(--color-text-tertiary);"></i>
-        <div class="stat-val">386 km</div>
+        <div class="stat-val" id="stat-distancia">0 km</div>
         <div class="stat-lbl">Distancia total</div>
       </div>
       <div class="stat-card">
         <i class="ti ti-leaf" aria-hidden="true" style="font-size:18px; color:var(--color-text-tertiary);"></i>
-        <div class="stat-val">28 kg</div>
+        <div class="stat-val" id="stat-co2">0 kg</div>
         <div class="stat-lbl">CO₂ ahorrado</div>
       </div>
     </div>
@@ -624,38 +624,81 @@
   }
 
   function poblarDOM(datos) {
-    const nombre = datos.nombre || 'Usuario';
+    const nombre    = datos.nombre || 'Usuario';
     const iniciales = calcularIniciales(nombre);
+    const carrera   = datos.carrera || datos.barrio || '';
 
+    // Nombre e iniciales
     document.getElementById('displayName').textContent = nombre;
     document.getElementById('avatarInitials').textContent = iniciales;
     document.getElementById('previewInitials').textContent = iniciales;
-    document.getElementById('displayUniversity').textContent = datos.universidad || '';
-    document.getElementById('displayCareer').textContent = datos.barrio || '';
 
+    // Universidad y carrera
+    document.getElementById('displayUniversity').textContent = datos.universidad || '';
+    document.getElementById('displayCareer').textContent = carrera;
+
+    // Foto de perfil (Google o subida)
+    const photoURL = datos.photoURL || '';
+    const avatarImg = document.getElementById('avatarImg');
+    const avatarInitialsEl = document.getElementById('avatarInitials');
+    if (photoURL && avatarImg) {
+      avatarImg.src = photoURL;
+      avatarImg.style.display = 'block';
+      avatarInitialsEl.style.display = 'none';
+    } else {
+      avatarImg.style.display = 'none';
+      avatarInitialsEl.style.display = '';
+    }
+
+    // Vehículo activo
     ['t-bike', 't-scooter', 't-walk'].forEach(t => document.getElementById(t)?.classList.remove('active'));
-    const idVehiculo = VEHICULO_A_ID[datos.vehiculo] || 't-bike';
-    document.getElementById(idVehiculo)?.classList.add('active');
+    document.getElementById(VEHICULO_A_ID[datos.vehiculo] || 't-bike')?.classList.add('active');
+
+    // Estadísticas
+    const rutas     = datos.rutasRecorridas ?? 0;
+    const distancia = datos.distanciaKm     ?? 0;
+    const co2       = datos.co2Kg           ?? 0;
+    document.getElementById('stat-rutas').textContent     = rutas;
+    document.getElementById('stat-distancia').textContent = distancia + ' km';
+    document.getElementById('stat-co2').textContent       = co2 + ' kg';
   }
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.href = 'login.html'; return; }
 
-    const ref = doc(db, 'usuarios', user.uid);
+    const ref  = doc(db, 'usuarios', user.uid);
     const snap = await getDoc(ref);
 
     let datos;
     if (snap.exists()) {
       datos = snap.data();
+      // Migrar docs viejos que no tengan los nuevos campos
+      const faltantes = {};
+      if (datos.carrera           === undefined) faltantes.carrera           = '';
+      if (datos.photoURL          === undefined) faltantes.photoURL          = user.photoURL || '';
+      if (datos.fechaRegistro     === undefined) faltantes.fechaRegistro     = datos.createdAt || serverTimestamp();
+      if (datos.rutasRecorridas   === undefined) faltantes.rutasRecorridas   = 0;
+      if (datos.distanciaKm       === undefined) faltantes.distanciaKm       = 0;
+      if (datos.co2Kg             === undefined) faltantes.co2Kg             = 0;
+      if (Object.keys(faltantes).length) {
+        await updateDoc(ref, faltantes);
+        datos = { ...datos, ...faltantes };
+      }
     } else {
       datos = {
-        nombre: user.displayName || 'Usuario',
-        correo: user.email || '',
-        universidad: '',
-        barrio: '',
-        vehiculo: 'bicicleta',
-        verified_email: user.emailVerified || false,
-        createdAt: serverTimestamp()
+        nombre:           user.displayName || 'Usuario',
+        correo:           user.email       || '',
+        universidad:      '',
+        carrera:          '',
+        barrio:           '',
+        vehiculo:         'bicicleta',
+        photoURL:         user.photoURL    || '',
+        verified_email:   user.emailVerified || false,
+        fechaRegistro:    serverTimestamp(),
+        createdAt:        serverTimestamp(),
+        rutasRecorridas:  0,
+        distanciaKm:      0,
+        co2Kg:            0
       };
       await setDoc(ref, datos);
     }
@@ -672,16 +715,16 @@
     });
 
     window.saveProfile = async function() {
-      const nombre    = document.getElementById('inputName').value.trim() || 'Usuario';
+      const nombre      = document.getElementById('inputName').value.trim() || 'Usuario';
       const universidad = document.getElementById('inputUniversity').value.trim();
-      const barrio    = document.getElementById('inputCareer').value.trim();
-      const activeEl  = document.querySelector('.transport-card.active');
-      const vehiculo  = activeEl ? (ID_A_VEHICULO[activeEl.id] || 'bicicleta') : 'bicicleta';
+      const carrera     = document.getElementById('inputCareer').value.trim();
+      const activeEl    = document.querySelector('.transport-card.active');
+      const vehiculo    = activeEl ? (ID_A_VEHICULO[activeEl.id] || 'bicicleta') : 'bicicleta';
 
       try {
-        await updateDoc(ref, { nombre, universidad, barrio, vehiculo });
+        await updateDoc(ref, { nombre, universidad, carrera, vehiculo });
         await updateProfile(user, { displayName: nombre });
-        poblarDOM({ nombre, universidad, barrio, vehiculo });
+        poblarDOM({ ...datos, nombre, universidad, carrera, vehiculo });
         syncPreviewToMain(true);
         closeModal();
         showToast();

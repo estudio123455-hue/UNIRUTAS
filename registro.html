@@ -136,6 +136,11 @@
         </div>
 
         <div class="form-group">
+          <label class="form-label" for="carrera">Carrera o facultad <span style="font-weight:400;color:var(--texto-3)">(opcional)</span></label>
+          <input class="form-input" type="text" id="carrera" placeholder="Ej: Ingeniería de Sistemas, Medicina...">
+        </div>
+
+        <div class="form-group">
           <label class="form-label" for="barrio">Barrio de origen</label>
           <input class="form-input" type="text" id="barrio" placeholder="Ej: Chapinero, Usaquén...">
           <span class="form-error" id="barrio-error">Ingresa tu barrio</span>
@@ -302,6 +307,7 @@
     const password    = document.getElementById('password').value;
     const vehiculo    = document.querySelector('input[name="vehiculo"]:checked')?.value;
     const universidad = document.getElementById('universidad').value.trim();
+    const carrera     = document.getElementById('carrera').value.trim();
     const barrio      = document.getElementById('barrio').value.trim();
 
     const btn     = document.getElementById('btn-registrar');
@@ -324,9 +330,15 @@
         correo: email,
         vehiculo,
         universidad,
+        carrera,
         barrio,
+        photoURL: cred.user.photoURL || '',
         verified_email: false,
-        createdAt: serverTimestamp()
+        fechaRegistro: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        rutasRecorridas: 0,
+        distanciaKm: 0,
+        co2Kg: 0
       });
 
       showToast('¡Cuenta creada! Bienvenido a UniRutas', 'success');
