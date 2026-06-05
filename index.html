@@ -260,6 +260,7 @@
   </style>
 </head>
 <body>
+<div id="auth-guard" class="auth-guard"><div class="auth-guard-spinner"></div></div>
 
 <!-- Mapa -->
 <div id="mapa"></div>
@@ -401,8 +402,16 @@
   import { showToast } from './toast.js';
 
   // Guard de sesión
+  function ocultarGuard() {
+    const g = document.getElementById('auth-guard');
+    if (!g) return;
+    g.classList.add('done');
+    setTimeout(() => g.remove(), 260);
+  }
+
   onAuthStateChanged(auth, (user) => {
-    if (!user) window.location.href = 'login.html';
+    if (!user) { window.location.href = 'login.html'; return; }
+    ocultarGuard();
   });
 
   // ============================================

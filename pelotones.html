@@ -547,6 +547,7 @@
   </style>
 </head>
 <body>
+<div id="auth-guard" class="auth-guard"><div class="auth-guard-spinner"></div></div>
 
 <!-- Header -->
 <div class="page-header">
@@ -695,8 +696,16 @@
   // ============================================
   // GUARD DE SESIÓN
   // ============================================
+  function ocultarGuard() {
+    const g = document.getElementById('auth-guard');
+    if (!g) return;
+    g.classList.add('done');
+    setTimeout(() => g.remove(), 260);
+  }
+
   onAuthStateChanged(auth, (user) => {
-    if (!user) window.location.href = 'login.html';
+    if (!user) { window.location.href = 'login.html'; return; }
+    ocultarGuard();
   });
 
   // ============================================
