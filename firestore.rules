@@ -16,11 +16,18 @@ service cloud.firestore {
     match /pelotones/{docId} {
       allow read:   if request.auth != null;
       allow create: if request.auth != null
-                    && request.resource.data.creadorUid == request.auth.uid;
-      allow update: if request.auth != null
-                    && resource.data.creadorUid == request.auth.uid;
+                    && request.resource.data.lider == request.auth.uid;
+      allow update: if request.auth != null;   // permite unirse (arrayUnion participantes)
       allow delete: if request.auth != null
-                    && resource.data.creadorUid == request.auth.uid;
+                    && resource.data.lider == request.auth.uid;
+
+      // Chat del pelotón
+      match /mensajes/{msgId} {
+        allow read:          if request.auth != null;
+        allow create:        if request.auth != null
+                             && request.resource.data.autorId == request.auth.uid;
+        allow update, delete: if false;
+      }
     }
 
     // Reportes: any authenticated user can read; only author can write
