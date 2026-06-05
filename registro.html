@@ -227,6 +227,7 @@
   });
 
   // ---- Helpers ----
+  function sanitize(str, max = 100) { return str.trim().replace(/[<>]/g, '').slice(0, max); }
   function validarEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
   function mostrarError(id, visible) {
     document.getElementById(id).classList.toggle('visible', visible);
@@ -302,13 +303,13 @@
   document.getElementById('registro-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const nombre      = document.getElementById('nombre').value.trim();
+    const nombre      = sanitize(document.getElementById('nombre').value,      100);
     const email       = document.getElementById('email').value.trim();
     const password    = document.getElementById('password').value;
     const vehiculo    = document.querySelector('input[name="vehiculo"]:checked')?.value;
-    const universidad = document.getElementById('universidad').value.trim();
-    const carrera     = document.getElementById('carrera').value.trim();
-    const barrio      = document.getElementById('barrio').value.trim();
+    const universidad = sanitize(document.getElementById('universidad').value, 120);
+    const carrera     = sanitize(document.getElementById('carrera').value,     100);
+    const barrio      = sanitize(document.getElementById('barrio').value,       80);
 
     const btn     = document.getElementById('btn-registrar');
     const spinner = document.getElementById('registrar-spinner');

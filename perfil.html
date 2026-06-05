@@ -732,10 +732,12 @@
       return new Blob([arr], { type: mime });
     }
 
+    function sanitize(str, max = 100) { return str.trim().replace(/[<>]/g, '').slice(0, max); }
+
     window.saveProfile = async function() {
-      const nombre      = document.getElementById('inputName').value.trim() || 'Usuario';
-      const universidad = document.getElementById('inputUniversity').value.trim();
-      const carrera     = document.getElementById('inputCareer').value.trim();
+      const nombre      = sanitize(document.getElementById('inputName').value,      100) || 'Usuario';
+      const universidad = sanitize(document.getElementById('inputUniversity').value, 120);
+      const carrera     = sanitize(document.getElementById('inputCareer').value,     100);
       const activeEl    = document.querySelector('.transport-card.active');
       const vehiculo    = activeEl ? (ID_A_VEHICULO[activeEl.id] || 'bicicleta') : 'bicicleta';
 
