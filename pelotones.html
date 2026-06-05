@@ -848,10 +848,43 @@
   // ============================================
   // BOTTOM SHEET
   // ============================================
+  async function cargarUbicacionActual() {
+    if (!navigator.geolocation) return;
+    const inputOrigen = document.getElementById('input-origen');
+    inputOrigen.value    = 'Obteniendo ubicación…';
+    inputOrigen.disabled = true;
+
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      origenCoords = { lat, lng };
+      actualizarMarker(markerOrigen, origenCoords, 'Origen', '#1d9e75');
+
+      try {
+        const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+        const data = await res.json();
+        const nombre = data.address?.road
+          || data.address?.suburb
+          || data.address?.neighbourhood
+          || data.display_name?.split(',')[0]
+          || 'Mi ubicación';
+        inputOrigen.value = nombre;
+      } catch {
+        inputOrigen.value = 'Mi ubicación';
+      } finally {
+        inputOrigen.disabled = false;
+      }
+    }, () => {
+      inputOrigen.value    = '';
+      inputOrigen.disabled = false;
+    }, { enableHighAccuracy: true, timeout: 10000 });
+  }
+
   window.abrirSheet = function() {
     document.getElementById('bottom-sheet').classList.add('open');
     document.getElementById('overlay').classList.add('visible');
     initMiniMapa();
+    cargarUbicacionActual();
   };
 
   window.cerrarSheet = function() {
