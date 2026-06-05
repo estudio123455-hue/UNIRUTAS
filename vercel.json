@@ -3,9 +3,6 @@
     { "source": "/", "destination": "/onboarding.html" }
   ],
   "cleanUrls": true,
-  "errors": [
-    { "statusCode": 404, "destination": "/404.html" }
-  ],
   "headers": [
     {
       "source": "/(.*)",
