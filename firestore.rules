@@ -34,6 +34,13 @@ service cloud.firestore {
                     && resource.data.autorUid == request.auth.uid;
     }
 
+    // SOS: solo el propio usuario puede leer/escribir su documento
+    match /sos/{uid} {
+      allow read:          if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid;
+      allow delete:        if false;
+    }
+
     // Block everything else
     match /{document=**} {
       allow read, write: if false;

@@ -224,7 +224,47 @@
     }
     .sos-overlay h2 { color: var(--blanco); font-size: 1.5rem; margin-bottom: 8px; }
     .sos-overlay p  { color: rgba(255,255,255,0.85); margin-bottom: 24px; }
-    .sos-coords     { font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-bottom: 24px; font-family: var(--fuente); }
+    .sos-coords     { font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-bottom: 8px; font-family: var(--fuente); }
+    .sos-privacidad {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.6);
+      max-width: 280px;
+      line-height: 1.55;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .sos-notif-lista {
+      width: 100%;
+      max-width: 280px;
+      margin: 12px 0 20px;
+      text-align: left;
+    }
+    .sos-notif-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 8px;
+    }
+    .sos-notif-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
+      font-size: 0.875rem;
+      color: rgba(255,255,255,0.9);
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+    .sos-notif-item:last-child { border-bottom: none; }
+    .sos-notif-check {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 11px;
+    }
 
     /* Leyenda */
     .leyenda {
@@ -377,6 +417,7 @@
   <h2>Enviando SOS...</h2>
   <p>Toca "Cancelar" si fue un error</p>
   <div class="sos-coords" id="sos-coords">Obteniendo ubicación...</div>
+  <p class="sos-privacidad">Tu ubicación será visible para el equipo de UniRutas y contactos de emergencia</p>
   <button class="btn btn-secondary" id="btn-cancelar-sos" style="width:auto; padding:0 32px; background:rgba(255,255,255,0.2); color:white; border-color:rgba(255,255,255,0.4)">
     Cancelar
   </button>
@@ -390,7 +431,24 @@
   <h2 style="color:white; margin-bottom:8px">SOS enviado</h2>
   <p style="color:rgba(255,255,255,0.85); margin-bottom:4px">Tu ubicación fue compartida</p>
   <div class="sos-coords" id="sos-coords-final"></div>
-  <p style="color:rgba(255,255,255,0.85); margin: 16px 0; font-size:0.9rem">Quédate en tu lugar.<br>Alguien está en camino.</p>
+
+  <div class="sos-notif-lista">
+    <div class="sos-notif-label">Notificados</div>
+    <div class="sos-notif-item">
+      <div class="sos-notif-check">✓</div>
+      <span>Equipo UniRutas</span>
+    </div>
+    <div class="sos-notif-item">
+      <div class="sos-notif-check">✓</div>
+      <span>Registro de emergencias</span>
+    </div>
+    <div class="sos-notif-item" id="sos-notif-usuario" style="display:none">
+      <div class="sos-notif-check">✓</div>
+      <span id="sos-notif-nombre">Tu cuenta</span>
+    </div>
+  </div>
+
+  <p style="color:rgba(255,255,255,0.8); margin-bottom:20px; font-size:0.9rem; text-align:center">Quédate en tu lugar.<br>Alguien está en camino.</p>
   <button class="btn btn-secondary" id="btn-bien" style="width:auto; padding:0 32px; background:rgba(255,255,255,0.2); color:white; border-color:rgba(255,255,255,0.4)">
     Ya estoy bien
   </button>
@@ -402,7 +460,8 @@
   import { auth, db } from './firebase.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import {
-    collection, onSnapshot, query, orderBy, limit
+    collection, onSnapshot, query, orderBy, limit,
+    doc, setDoc, arrayUnion
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { showToast } from './toast.js';
 
@@ -1109,12 +1168,42 @@
     showToast('SOS cancelado', 'info');
   }
 
-  function enviarSOS() {
+  async function enviarSOS() {
     document.getElementById('sos-overlay').classList.remove('visible');
+
+    const user = auth.currentUser;
+
+    // Guardar en Firestore sos/{uid}
+    if (user) {
+      try {
+        await setDoc(doc(db, 'sos', user.uid), {
+          uid: user.uid,
+          nombre: user.displayName || 'Usuario',
+          ultimaAlerta: new Date().toISOString(),
+          historial: arrayUnion({
+            lat: sosLat ? parseFloat(sosLat) : null,
+            lng: sosLng ? parseFloat(sosLng) : null,
+            timestamp: new Date().toISOString(),
+            atendido: false
+          })
+        }, { merge: true });
+
+        // Mostrar nombre del usuario en notificados
+        const notifUsuario = document.getElementById('sos-notif-usuario');
+        const notifNombre  = document.getElementById('sos-notif-nombre');
+        if (notifUsuario && notifNombre) {
+          notifNombre.textContent = user.displayName || user.email || 'Tu cuenta';
+          notifUsuario.style.display = 'flex';
+        }
+      } catch (e) {
+        console.error('Error guardando SOS:', e);
+      }
+    }
+
     const enviado = document.getElementById('sos-enviado');
     enviado.style.display = 'flex';
     document.getElementById('sos-coords-final').textContent =
-      sosLat ? `Ubicación: ${sosLat}, ${sosLng}` : 'Ubicación no disponible';
+      sosLat ? `📍 ${sosLat}, ${sosLng}` : 'Ubicación no disponible';
   }
 
   function cerrarSOSEnviado() {
