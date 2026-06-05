@@ -90,6 +90,64 @@
       color: var(--blanco);
     }
 
+    /* Segunda fila de filtros: localidad + distancia */
+    .filtros-segunda-fila {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--gris-100);
+    }
+    .filtro-select {
+      flex: 1;
+      min-width: 0;
+      padding: 7px 28px 7px 12px;
+      border: 1.5px solid var(--gris-200);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--gris-700);
+      background: var(--blanco);
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      transition: border-color 0.15s;
+    }
+    .filtro-select:focus { outline: none; border-color: var(--verde); }
+    .filtro-dist {
+      flex-shrink: 0;
+      padding: 7px 11px;
+      border-radius: 20px;
+      border: 1.5px solid var(--gris-200);
+      background: var(--blanco);
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--gris-700);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .filtro-dist:hover  { background: var(--gris-50); }
+    .filtro-dist.active { background: var(--verde); border-color: var(--verde); color: var(--blanco); }
+
+    /* Badge de localidad en la card */
+    .localidad-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      background: var(--gris-100);
+      color: var(--gris-600);
+      margin-top: 4px;
+    }
+
     /* Lista de pelotones */
     .pelotones-list {
       padding: 16px 20px;
@@ -567,6 +625,34 @@
     <button class="filtro-btn" data-filtro="patineta" onclick="setFiltro('patineta')">⚡ Patineta</button>
     <button class="filtro-btn" data-filtro="pie" onclick="setFiltro('pie')">🚶 A pie</button>
   </div>
+  <div class="filtros-segunda-fila">
+    <select class="filtro-select" id="select-localidad-filtro" onchange="setFiltroLocalidad(this.value)">
+      <option value="todas">📍 Todas las localidades</option>
+      <option value="Usaquén">Usaquén</option>
+      <option value="Chapinero">Chapinero</option>
+      <option value="Santa Fe">Santa Fe</option>
+      <option value="San Cristóbal">San Cristóbal</option>
+      <option value="Usme">Usme</option>
+      <option value="Tunjuelito">Tunjuelito</option>
+      <option value="Bosa">Bosa</option>
+      <option value="Kennedy">Kennedy</option>
+      <option value="Fontibón">Fontibón</option>
+      <option value="Engativá">Engativá</option>
+      <option value="Suba">Suba</option>
+      <option value="Barrios Unidos">Barrios Unidos</option>
+      <option value="Teusaquillo">Teusaquillo</option>
+      <option value="Los Mártires">Los Mártires</option>
+      <option value="Antonio Nariño">Antonio Nariño</option>
+      <option value="Puente Aranda">Puente Aranda</option>
+      <option value="La Candelaria">La Candelaria</option>
+      <option value="Rafael Uribe Uribe">Rafael Uribe Uribe</option>
+      <option value="Ciudad Bolívar">Ciudad Bolívar</option>
+      <option value="Sumapaz">Sumapaz</option>
+    </select>
+    <button class="filtro-dist active" data-dist="ciudad" onclick="setFiltroDistancia('ciudad')">🗺️ Ciudad</button>
+    <button class="filtro-dist" data-dist="5km" onclick="setFiltroDistancia('5km')">≤5 km</button>
+    <button class="filtro-dist" data-dist="2km" onclick="setFiltroDistancia('2km')">≤2 km</button>
+  </div>
 </div>
 
 <!-- Lista de pelotones -->
@@ -649,6 +735,34 @@
       </div>
     </div>
 
+    <!-- Localidad -->
+    <div class="form-group">
+      <label class="form-label">Localidad</label>
+      <select class="form-input" id="input-localidad" required>
+        <option value="">Selecciona la localidad</option>
+        <option value="Usaquén">Usaquén</option>
+        <option value="Chapinero">Chapinero</option>
+        <option value="Santa Fe">Santa Fe</option>
+        <option value="San Cristóbal">San Cristóbal</option>
+        <option value="Usme">Usme</option>
+        <option value="Tunjuelito">Tunjuelito</option>
+        <option value="Bosa">Bosa</option>
+        <option value="Kennedy">Kennedy</option>
+        <option value="Fontibón">Fontibón</option>
+        <option value="Engativá">Engativá</option>
+        <option value="Suba">Suba</option>
+        <option value="Barrios Unidos">Barrios Unidos</option>
+        <option value="Teusaquillo">Teusaquillo</option>
+        <option value="Los Mártires">Los Mártires</option>
+        <option value="Antonio Nariño">Antonio Nariño</option>
+        <option value="Puente Aranda">Puente Aranda</option>
+        <option value="La Candelaria">La Candelaria</option>
+        <option value="Rafael Uribe Uribe">Rafael Uribe Uribe</option>
+        <option value="Ciudad Bolívar">Ciudad Bolívar</option>
+        <option value="Sumapaz">Sumapaz</option>
+      </select>
+    </div>
+
     <!-- Botón crear -->
     <button type="submit" class="btn btn-primary" style="width: 100%">Crear pelotón</button>
   </form>
@@ -711,10 +825,36 @@
   // ============================================
   // ESTADO
   // ============================================
-  let filtroActual = 'todos';
+  const LOCALIDADES_BOGOTA = [
+    "Usaquén","Chapinero","Santa Fe","San Cristóbal","Usme",
+    "Tunjuelito","Bosa","Kennedy","Fontibón","Engativá",
+    "Suba","Barrios Unidos","Teusaquillo","Los Mártires",
+    "Antonio Nariño","Puente Aranda","La Candelaria",
+    "Rafael Uribe Uribe","Ciudad Bolívar","Sumapaz"
+  ];
+
+  function haversine(lat1, lng1, lat2, lng2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2
+      + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  let filtroActual     = 'todos';
+  let filtroLocalidad  = 'todas';
+  let filtroDistancia  = 'ciudad';
+  let userLat = null, userLng = null;
   let pelotonesData = [];
   let currentUser = auth.currentUser;
   auth.onAuthStateChanged((user) => { currentUser = user; });
+
+  // Obtener ubicación para filtro de distancia (silencioso)
+  navigator.geolocation?.getCurrentPosition(
+    pos => { userLat = pos.coords.latitude; userLng = pos.coords.longitude; },
+    () => {}
+  );
 
   let vehiculoSeleccionado = 'bicicleta';
   let origenCoords = null;
@@ -737,6 +877,23 @@
     renderPelotones();
   };
 
+  window.setFiltroLocalidad = function(loc) {
+    filtroLocalidad = loc;
+    renderPelotones();
+  };
+
+  window.setFiltroDistancia = function(dist) {
+    if (dist !== 'ciudad' && !userLat) {
+      showToast('Activa la ubicación para filtrar por distancia', 'warning');
+      return;
+    }
+    filtroDistancia = dist;
+    document.querySelectorAll('.filtro-dist').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.dist === dist);
+    });
+    renderPelotones();
+  };
+
   // ============================================
   // CARGAR PELOTONES EN TIEMPO REAL
   // ============================================
@@ -748,9 +905,21 @@
 
   function renderPelotones() {
     const container = document.getElementById('pelotones-list');
-    const filtrados = filtroActual === 'todos' 
-      ? pelotonesData 
-      : pelotonesData.filter(p => p.vehiculo === filtroActual);
+    let filtrados = pelotonesData;
+
+    if (filtroActual !== 'todos') {
+      filtrados = filtrados.filter(p => p.vehiculo === filtroActual);
+    }
+    if (filtroLocalidad !== 'todas') {
+      filtrados = filtrados.filter(p => p.localidad === filtroLocalidad);
+    }
+    if (filtroDistancia !== 'ciudad' && userLat !== null && userLng !== null) {
+      const maxKm = filtroDistancia === '2km' ? 2 : 5;
+      filtrados = filtrados.filter(p => {
+        if (!p.lat || !p.lng) return false;
+        return haversine(userLat, userLng, p.lat, p.lng) <= maxKm;
+      });
+    }
 
     if (filtrados.length === 0) {
       container.innerHTML = `
@@ -759,7 +928,9 @@
             <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
           </svg>
           <h3>No hay pelotones</h3>
-          <p>${filtroActual === 'todos' ? 'Sé el primero en crear uno' : 'No hay pelotones de este tipo'}</p>
+          <p>${filtroActual === 'todos' && filtroLocalidad === 'todas' && filtroDistancia === 'ciudad'
+            ? 'Sé el primero en crear uno'
+            : 'Prueba con otros filtros'}</p>
         </div>
       `;
       return;
@@ -772,6 +943,9 @@
       const cupoMax = p.cupoMax || 6;
       const progreso = Math.min((participantes.length / cupoMax) * 100, 100);
       const esParticipante = currentUser && participantes.includes(currentUser.uid);
+      const distText = (filtroDistancia !== 'ciudad' && userLat && p.lat)
+        ? ` · ${haversine(userLat, userLng, p.lat, p.lng).toFixed(1)} km`
+        : '';
 
       return `
         <div class="peloton-card">
@@ -779,8 +953,11 @@
             <div class="avatar">${iniciales}</div>
             <div class="peloton-info">
               <div class="lider-nombre">${p.liderNombre || 'Sin nombre'}</div>
-              <div class="vehiculo-badge ${p.vehiculo}">
-                ${vehiculoIcon} ${p.vehiculo.charAt(0).toUpperCase() + p.vehiculo.slice(1)}
+              <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px">
+                <div class="vehiculo-badge ${p.vehiculo}">
+                  ${vehiculoIcon} ${p.vehiculo.charAt(0).toUpperCase() + p.vehiculo.slice(1)}
+                </div>
+                ${p.localidad ? `<div class="localidad-badge">📍 ${p.localidad}${distText}</div>` : ''}
               </div>
             </div>
           </div>
@@ -815,7 +992,7 @@
           </div>
 
           <div class="peloton-footer">
-            ${esParticipante 
+            ${esParticipante
               ? `<button class="btn-unirme" onclick="abrirChat('${p.id}', '${p.origen || ''} → ${p.destino || ''}')" style="background: var(--azul);">💬 Chat</button>`
               : `<button class="btn-unirme" onclick="unirmePeloton('${p.id}')">Unirme</button>`
             }
@@ -897,13 +1074,14 @@
     document.getElementById('form-peloton').reset();
     origenCoords = null;
     destinoCoords = null;
-    if (markerOrigen) miniMapa.removeLayer(markerOrigen);
-    if (markerDestino) miniMapa.removeLayer(markerDestino);
-    if (lineaRuta) miniMapa.removeLayer(lineaRuta);
+    if (markerOrigen && miniMapa)  miniMapa.removeLayer(markerOrigen);
+    if (markerDestino && miniMapa) miniMapa.removeLayer(markerDestino);
+    if (lineaRuta && miniMapa)     miniMapa.removeLayer(lineaRuta);
     markerOrigen = null;
     markerDestino = null;
     lineaRuta = null;
     selectVehiculo('bicicleta');
+    document.getElementById('input-localidad').value = '';
   }
 
   // ============================================
@@ -1045,13 +1223,18 @@
       return;
     }
 
-    const origen = document.getElementById('input-origen').value.trim();
-    const destino = document.getElementById('input-destino').value.trim();
-    const hora = document.getElementById('input-hora').value;
-    const cupo = parseInt(document.getElementById('input-cupo').value);
+    const origen    = document.getElementById('input-origen').value.trim();
+    const destino   = document.getElementById('input-destino').value.trim();
+    const hora      = document.getElementById('input-hora').value;
+    const cupo      = parseInt(document.getElementById('input-cupo').value);
+    const localidad = document.getElementById('input-localidad').value;
 
     if (!origen || !destino || !hora) {
       showToast('Completa todos los campos', 'warning');
+      return;
+    }
+    if (!localidad) {
+      showToast('Selecciona la localidad', 'warning');
       return;
     }
 
@@ -1064,6 +1247,7 @@
         vehiculo: vehiculoSeleccionado,
         horaSalida: hora,
         cupoMax: cupo,
+        localidad,
         participantes: [currentUser.uid],
         lat: origenCoords.lat,
         lng: origenCoords.lng,

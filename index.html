@@ -511,6 +511,34 @@
   };
   const capasActivas = { ciclovias: true, 'uni-publica': true, 'uni-privada': true, pelotones: true, reportes: true };
 
+  // Centros aproximados de cada localidad de Bogotá
+  const LOCALIDAD_COORDS = {
+    "Usaquén":           [4.7093, -74.0329],
+    "Chapinero":         [4.6473, -74.0577],
+    "Santa Fe":          [4.5958, -74.0815],
+    "San Cristóbal":     [4.5745, -74.0827],
+    "Usme":              [4.4784, -74.1319],
+    "Tunjuelito":        [4.5689, -74.1297],
+    "Bosa":              [4.6190, -74.1879],
+    "Kennedy":           [4.6282, -74.1448],
+    "Fontibón":          [4.6770, -74.1498],
+    "Engativá":          [4.7031, -74.1138],
+    "Suba":              [4.7455, -74.0900],
+    "Barrios Unidos":    [4.6695, -74.0726],
+    "Teusaquillo":       [4.6471, -74.0863],
+    "Los Mártires":      [4.6147, -74.0927],
+    "Antonio Nariño":    [4.5975, -74.1080],
+    "Puente Aranda":     [4.6282, -74.1120],
+    "La Candelaria":     [4.5977, -74.0750],
+    "Rafael Uribe Uribe":[4.5682, -74.1102],
+    "Ciudad Bolívar":    [4.5077, -74.1499],
+    "Sumapaz":           [4.0100, -74.2000]
+  };
+
+  // Capa de burbujas por localidad (se muestra al hacer zoom out)
+  const localidadLayer = L.layerGroup();
+  let reportesCacheIndex = [];
+
   // ============================================
   // CICLOVÍAS IDU — GeoJSON oficial con caché
   // ============================================
@@ -753,13 +781,18 @@
 
   const qReportes = query(collection(db, 'reportes'), orderBy('createdAt', 'desc'), limit(50));
   onSnapshot(qReportes, (snap) => {
+    // Limpiar marcadores individuales
     Object.values(marcadoresReportes).forEach(m => capas.reportes.removeLayer(m));
+    for (const k in marcadoresReportes) delete marcadoresReportes[k];
+
+    reportesCacheIndex = [];
 
     snap.docs.forEach(docSnap => {
       const r = docSnap.data();
-      if (!r.lat || !r.lng) return;
-      const info = iconosReporte[r.tipo] || iconosReporte.otro;
+      if (!r.lat || !r.lng || r.resuelto) return;
+      reportesCacheIndex.push({ id: docSnap.id, ...r });
 
+      const info = iconosReporte[r.tipo] || iconosReporte.otro;
       const iconoR = L.divIcon({
         html: `<div style="width:32px;height:32px;background:${info.color};border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.25);font-size:14px">${info.emoji}</div>`,
         iconSize: [32, 32],
@@ -773,13 +806,60 @@
           <div style="font-family:Inter,sans-serif; padding:4px">
             <strong style="color:${info.color}">${info.label}</strong><br>
             <span style="font-size:12px; color:#6b7280">${r.descripcion || 'Sin descripción'}</span><br>
+            ${r.localidad ? `<span style="font-size:11px;color:#9ca3af">📍 ${r.localidad}</span><br>` : ''}
             <span style="font-size:11px; color:#9ca3af">${fecha}</span>
           </div>
         `);
       marker.addTo(capas.reportes);
       marcadoresReportes[docSnap.id] = marker;
     });
+
+    actualizarCapaReportes();
   });
+
+  // ---- Vista de reportes según zoom ----
+  function renderLocalidadLayer() {
+    localidadLayer.clearLayers();
+    const byLoc = {};
+    reportesCacheIndex.forEach(r => {
+      if (!r.localidad || !LOCALIDAD_COORDS[r.localidad]) return;
+      byLoc[r.localidad] = (byLoc[r.localidad] || 0) + 1;
+    });
+
+    Object.entries(byLoc).forEach(([loc, count]) => {
+      const [lat, lng] = LOCALIDAD_COORDS[loc];
+      const sz = Math.min(32 + count * 5, 60);
+      L.marker([lat, lng], {
+        icon: L.divIcon({
+          html: `<div style="width:${sz}px;height:${sz}px;background:#dc2626;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:${count > 9 ? 11 : 14}px;border:3px solid white;box-shadow:0 2px 12px rgba(220,38,38,0.4)">${count}</div>`,
+          iconSize: [sz, sz], iconAnchor: [sz/2, sz/2], className: ''
+        })
+      })
+      .bindPopup(`
+        <div style="font-family:Inter,sans-serif;padding:4px;min-width:120px">
+          <strong style="color:#dc2626">${loc}</strong><br>
+          <span style="font-size:12px;color:#6b7280">${count} reporte${count !== 1 ? 's' : ''} activo${count !== 1 ? 's' : ''}</span>
+        </div>
+      `)
+      .on('click', function() { mapa.setView([lat, lng], 14); mapa.closePopup(); })
+      .addTo(localidadLayer);
+    });
+  }
+
+  function actualizarCapaReportes() {
+    if (!capasActivas.reportes) return;
+    const zoom = mapa.getZoom();
+    if (zoom >= 13) {
+      localidadLayer.remove();
+      if (!mapa.hasLayer(capas.reportes)) capas.reportes.addTo(mapa);
+    } else {
+      capas.reportes.remove();
+      renderLocalidadLayer();
+      if (!mapa.hasLayer(localidadLayer)) localidadLayer.addTo(mapa);
+    }
+  }
+
+  mapa.on('zoomend', actualizarCapaReportes);
 
   // ============================================
   // TOGGLE CAPAS
@@ -788,12 +868,17 @@
     const btn = document.getElementById(`btn-${nombre}`);
     if (capasActivas[nombre]) {
       mapa.removeLayer(capas[nombre]);
+      if (nombre === 'reportes') localidadLayer.remove();
       capasActivas[nombre] = false;
       btn.style.opacity = '0.4';
     } else {
-      mapa.addLayer(capas[nombre]);
       capasActivas[nombre] = true;
       btn.style.opacity = '1';
+      if (nombre === 'reportes') {
+        actualizarCapaReportes();
+      } else {
+        mapa.addLayer(capas[nombre]);
+      }
     }
   }
 

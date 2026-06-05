@@ -335,6 +335,42 @@
     /* Overlay */
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 90; display: none; }
     .overlay.visible { display: block; }
+
+    /* Filtro localidad select */
+    .filtro-select {
+      width: 100%;
+      margin-top: 8px;
+      padding: 7px 28px 7px 12px;
+      border: 1.5px solid var(--gris-200);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--gris-700);
+      background: var(--blanco);
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      transition: border-color 0.15s;
+    }
+    .filtro-select:focus { outline: none; border-color: var(--rojo); }
+    .filtro-select.active { border-color: var(--rojo); color: var(--gris-900); }
+
+    /* Localidad detectada en el form */
+    .localidad-detectada {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--gris-50);
+      border: 1.5px solid var(--gris-200);
+      border-radius: var(--radio-md);
+      font-size: 0.875rem;
+      color: var(--gris-700);
+    }
+    .localidad-detectada.detectando { color: var(--gris-400); font-style: italic; }
   </style>
 </head>
 <body>
@@ -360,6 +396,29 @@
     <button class="filtro-btn"        data-filtro="sospechoso" onclick="setFiltro('sospechoso')">👤 Sospechoso</button>
     <button class="filtro-btn"        data-filtro="otro"       onclick="setFiltro('otro')">⚠️ Otro</button>
   </div>
+  <select class="filtro-select" id="select-localidad-rep" onchange="setFiltroLocalidad(this.value)">
+    <option value="todas">📍 Todas las localidades</option>
+    <option value="Usaquén">Usaquén</option>
+    <option value="Chapinero">Chapinero</option>
+    <option value="Santa Fe">Santa Fe</option>
+    <option value="San Cristóbal">San Cristóbal</option>
+    <option value="Usme">Usme</option>
+    <option value="Tunjuelito">Tunjuelito</option>
+    <option value="Bosa">Bosa</option>
+    <option value="Kennedy">Kennedy</option>
+    <option value="Fontibón">Fontibón</option>
+    <option value="Engativá">Engativá</option>
+    <option value="Suba">Suba</option>
+    <option value="Barrios Unidos">Barrios Unidos</option>
+    <option value="Teusaquillo">Teusaquillo</option>
+    <option value="Los Mártires">Los Mártires</option>
+    <option value="Antonio Nariño">Antonio Nariño</option>
+    <option value="Puente Aranda">Puente Aranda</option>
+    <option value="La Candelaria">La Candelaria</option>
+    <option value="Rafael Uribe Uribe">Rafael Uribe Uribe</option>
+    <option value="Ciudad Bolívar">Ciudad Bolívar</option>
+    <option value="Sumapaz">Sumapaz</option>
+  </select>
 </div>
 
 <!-- Lista de reportes -->
@@ -444,6 +503,17 @@
       </div>
     </div>
 
+    <!-- Localidad auto-detectada -->
+    <div class="form-group" id="localidad-grupo">
+      <label class="form-label">Localidad</label>
+      <div class="localidad-detectada detectando" id="localidad-detectada">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+        </svg>
+        <span id="localidad-detectada-text">Se detectará al marcar la ubicación</span>
+      </div>
+    </div>
+
     <button type="submit" class="btn btn-primary" style="width:100%; background:var(--rojo); border-color:var(--rojo)">Reportar</button>
   </form>
 </div>
@@ -501,17 +571,56 @@
     ocultarGuard();
   });
 
+  // ---- Constantes ----
+  const LOCALIDADES_BOGOTA = [
+    "Usaquén","Chapinero","Santa Fe","San Cristóbal","Usme",
+    "Tunjuelito","Bosa","Kennedy","Fontibón","Engativá",
+    "Suba","Barrios Unidos","Teusaquillo","Los Mártires",
+    "Antonio Nariño","Puente Aranda","La Candelaria",
+    "Rafael Uribe Uribe","Ciudad Bolívar","Sumapaz"
+  ];
+
   // ---- Estado ----
-  let filtroActual = 'todos';
-  let reportesData = [];
-  let currentUser  = auth.currentUser;
+  let filtroActual    = 'todos';
+  let filtroLocalidad = 'todas';
+  let reportesData    = [];
+  let currentUser     = auth.currentUser;
   auth.onAuthStateChanged(u => { currentUser = u; });
 
-  let tipoSeleccionado = 'hueco';
-  let pendingFoto      = null;
-  let reporteCoords    = { lat: 4.7110, lng: -74.0721 };
-  let miniMapa         = null;
-  let markerReporte    = null;
+  let tipoSeleccionado    = 'hueco';
+  let pendingFoto         = null;
+  let localidadDetectada  = '';
+  let reporteCoords       = { lat: 4.7110, lng: -74.0721 };
+  let miniMapa            = null;
+  let markerReporte       = null;
+
+  // ---- Detectar localidad con Nominatim ----
+  async function detectarLocalidad(lat, lng) {
+    const el    = document.getElementById('localidad-detectada');
+    const texto = document.getElementById('localidad-detectada-text');
+    if (!el || !texto) return;
+    el.className = 'localidad-detectada detectando';
+    texto.textContent = 'Detectando localidad…';
+    try {
+      const res  = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+        { headers: { 'Accept-Language': 'es' } }
+      );
+      const data = await res.json();
+      const addr = data.address || {};
+      const candidato = (addr.city_district || addr.suburb || addr.borough || addr.quarter || '').toLowerCase();
+      const match = LOCALIDADES_BOGOTA.find(loc =>
+        candidato.includes(loc.toLowerCase()) || loc.toLowerCase().includes(candidato)
+      );
+      localidadDetectada = match || '';
+      el.className = 'localidad-detectada' + (match ? '' : ' detectando');
+      texto.textContent = match ? `📍 ${match}` : 'Localidad no identificada';
+    } catch {
+      el.className = 'localidad-detectada detectando';
+      texto.textContent = 'No se pudo detectar la localidad';
+      localidadDetectada = '';
+    }
+  }
 
   const infoTipos = {
     hueco:      { color: '#92400e', emoji: '🕳️', label: 'Hueco' },
@@ -529,6 +638,13 @@
     renderReportes();
   };
 
+  window.setFiltroLocalidad = function(loc) {
+    filtroLocalidad = loc;
+    const sel = document.getElementById('select-localidad-rep');
+    if (sel) sel.classList.toggle('active', loc !== 'todas');
+    renderReportes();
+  };
+
   // ---- Cargar reportes en tiempo real ----
   const HORAS_VIDA = 24;
   const limite = Timestamp.fromMillis(Date.now() - HORAS_VIDA * 3600000);
@@ -543,8 +659,11 @@
 
   function renderReportes() {
     const container = document.getElementById('reportes-list');
-    const filtrados = filtroActual === 'todos' ? reportesData : reportesData.filter(r => r.tipo === filtroActual);
-    const activos   = filtrados.filter(r => !r.resuelto);
+    let filtrados = filtroActual === 'todos' ? reportesData : reportesData.filter(r => r.tipo === filtroActual);
+    if (filtroLocalidad !== 'todas') {
+      filtrados = filtrados.filter(r => r.localidad === filtroLocalidad);
+    }
+    const activos = filtrados.filter(r => !r.resuelto);
 
     if (activos.length === 0) {
       container.innerHTML = `
@@ -554,7 +673,7 @@
             <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
           <h3>No hay reportes</h3>
-          <p>${filtroActual === 'todos' ? 'Sé el primero en reportar un peligro' : 'No hay reportes de este tipo'}</p>
+          <p>${filtroActual === 'todos' && filtroLocalidad === 'todas' ? 'Sé el primero en reportar un peligro' : 'Prueba con otros filtros'}</p>
         </div>`;
       return;
     }
@@ -572,6 +691,7 @@
             <div class="reporte-meta-header">
               <span class="tipo-badge ${r.tipo}">${info.label}</span>
               <span style="margin-left:6px; font-size:0.78rem; color:var(--gris-500); font-weight:600">${score > 0 ? '+' : ''}${score}</span>
+              ${r.localidad ? `<span style="margin-left:6px;font-size:0.72rem;color:var(--gris-400)">📍 ${r.localidad}</span>` : ''}
             </div>
             <span class="reporte-tiempo">${tiempo}</span>
           </div>
@@ -614,13 +734,18 @@
 
   function limpiarFormulario() {
     document.getElementById('form-reporte').reset();
-    reporteCoords = { lat: 4.7110, lng: -74.0721 };
+    reporteCoords      = { lat: 4.7110, lng: -74.0721 };
+    localidadDetectada = '';
     selectTipo('hueco');
     quitarFoto();
     const counter = document.getElementById('char-counter');
     counter.textContent = '0 / 300';
     counter.className   = 'char-counter';
     if (markerReporte && miniMapa) { miniMapa.removeLayer(markerReporte); markerReporte = null; }
+    const el = document.getElementById('localidad-detectada');
+    const texto = document.getElementById('localidad-detectada-text');
+    if (el) el.className = 'localidad-detectada detectando';
+    if (texto) texto.textContent = 'Se detectará al marcar la ubicación';
   }
 
   // ---- Tipo ----
@@ -652,6 +777,7 @@
     markerReporte.on('dragend', e => {
       const p = e.target.getLatLng();
       reporteCoords = { lat: p.lat, lng: p.lng };
+      detectarLocalidad(p.lat, p.lng);
     });
   }
 
@@ -668,6 +794,7 @@
         reporteCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         miniMapa.setView([reporteCoords.lat, reporteCoords.lng], 16);
         actualizarMarkerReporte();
+        detectarLocalidad(reporteCoords.lat, reporteCoords.lng);
         showToast('Ubicación actualizada', 'success');
       },
       () => showToast('No se pudo obtener tu ubicación', 'warning')
@@ -735,6 +862,7 @@
         fotoURL,
         lat: reporteCoords.lat,
         lng: reporteCoords.lng,
+        localidad: localidadDetectada || '',
         uid: currentUser.uid,
         createdAt: serverTimestamp(),
         votos: {},
