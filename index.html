@@ -103,10 +103,11 @@
       position: relative;
     }
     .capa-btn:hover { background: var(--gris-50); }
-    .capa-btn.active-ciclovias  { background: var(--verde-light);    border-color: var(--verde); }
-    .capa-btn.active-universidades { background: var(--azul-light);  border-color: var(--azul); }
-    .capa-btn.active-pelotones  { background: #fff3e0; border-color: #f59e0b; }
-    .capa-btn.active-reportes   { background: var(--rojo-light);     border-color: var(--rojo); }
+    .capa-btn.active-ciclovias   { background: var(--verde-light);  border-color: var(--verde); }
+    .capa-btn.active-uni-publica { background: var(--azul-light);   border-color: #2563eb; }
+    .capa-btn.active-uni-privada { background: #ede9fe;             border-color: #7c3aed; }
+    .capa-btn.active-pelotones   { background: #fff3e0; border-color: #f59e0b; }
+    .capa-btn.active-reportes    { background: var(--rojo-light);   border-color: var(--rojo); }
 
     .capa-tooltip {
       position: absolute;
@@ -332,11 +333,17 @@
     </svg>
     <span class="capa-tooltip">Ciclovías</span>
   </button>
-  <button class="capa-btn active-universidades" id="btn-universidades" title="Universidades">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--azul)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <button class="capa-btn active-uni-publica" id="btn-uni-publica" title="Universidades públicas">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
     </svg>
-    <span class="capa-tooltip">Universidades</span>
+    <span class="capa-tooltip">U. Públicas</span>
+  </button>
+  <button class="capa-btn active-uni-privada" id="btn-uni-privada" title="Universidades privadas">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+    <span class="capa-tooltip">U. Privadas</span>
   </button>
   <button class="capa-btn active-pelotones" id="btn-pelotones" title="Pelotones">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -357,7 +364,8 @@
 <!-- Leyenda -->
 <div class="leyenda">
   <div class="leyenda-item"><div class="leyenda-dot" style="background:var(--verde)"></div> Ciclovía</div>
-  <div class="leyenda-item"><div class="leyenda-dot" style="background:var(--azul)"></div> Universidad</div>
+  <div class="leyenda-item"><div class="leyenda-dot" style="background:#2563eb"></div> U. Pública</div>
+  <div class="leyenda-item"><div class="leyenda-dot" style="background:#7c3aed"></div> U. Privada</div>
   <div class="leyenda-item"><div class="leyenda-dot" style="background:#f59e0b"></div> Pelotón</div>
   <div class="leyenda-item"><div class="leyenda-dot" style="background:var(--rojo)"></div> Peligro</div>
 </div>
@@ -496,11 +504,12 @@
   // Grupos de capas
   const capas = {
     ciclovias:     L.layerGroup().addTo(mapa),
-    universidades: L.layerGroup().addTo(mapa),
+    'uni-publica': L.layerGroup().addTo(mapa),
+    'uni-privada': L.layerGroup().addTo(mapa),
     pelotones:     L.markerClusterGroup().addTo(mapa),
     reportes:      L.markerClusterGroup().addTo(mapa)
   };
-  const capasActivas = { ciclovias: true, universidades: true, pelotones: true, reportes: true };
+  const capasActivas = { ciclovias: true, 'uni-publica': true, 'uni-privada': true, pelotones: true, reportes: true };
 
   // ============================================
   // CICLOVÍAS IDU — GeoJSON oficial con caché
@@ -596,48 +605,100 @@
   // UNIVERSIDADES DE BOGOTÁ
   // ============================================
   const universidades = [
-    { nombre: "Universidad Nacional de Colombia", lat: 4.6359, lng: -74.0839, color: '#2563eb' },
-    { nombre: "Universidad de los Andes",         lat: 4.6016, lng: -74.0660, color: '#2563eb' },
-    { nombre: "Universidad Javeriana",            lat: 4.6280, lng: -74.0643, color: '#2563eb' },
-    { nombre: "Universidad Distrital",            lat: 4.6354, lng: -74.0830, color: '#2563eb' },
-    { nombre: "Universidad del Rosario",          lat: 4.6010, lng: -74.0720, color: '#2563eb' },
-    { nombre: "SENA - Distrito Capital",          lat: 4.6576, lng: -74.0920, color: '#2563eb' },
-    { nombre: "Universidad EAN",                  lat: 4.6530, lng: -74.0580, color: '#2563eb' },
-    { nombre: "Universidad Pedagógica Nacional",  lat: 4.6690, lng: -74.0920, color: '#2563eb' },
-    { nombre: "Univ. Santo Tomás",                lat: 4.6350, lng: -74.0830, color: '#2563eb' },
-    { nombre: "Universidad La Salle",             lat: 4.6280, lng: -74.0840, color: '#2563eb' }
+    // Públicas
+    { nombre: "Universidad Nacional de Colombia",               lat: 4.6359, lng: -74.0839, tipo: "publica" },
+    { nombre: "Universidad Distrital Francisco José de Caldas", lat: 4.6016, lng: -74.0672, tipo: "publica" },
+    { nombre: "Universidad Pedagógica Nacional",                lat: 4.6690, lng: -74.0920, tipo: "publica" },
+    { nombre: "SENA Regional Bogotá",                           lat: 4.6576, lng: -74.0920, tipo: "publica" },
+    { nombre: "Universidad Militar Nueva Granada",              lat: 4.6369, lng: -74.0846, tipo: "publica" },
+    { nombre: "Universidad Colegio Mayor de Cundinamarca",      lat: 4.6009, lng: -74.0720, tipo: "publica" },
+    // Privadas
+    { nombre: "Universidad de los Andes",                       lat: 4.6016, lng: -74.0660, tipo: "privada" },
+    { nombre: "Pontificia Universidad Javeriana",               lat: 4.6280, lng: -74.0643, tipo: "privada" },
+    { nombre: "Universidad del Rosario",                        lat: 4.6010, lng: -74.0720, tipo: "privada" },
+    { nombre: "Universidad de La Sabana",                       lat: 4.8607, lng: -74.0354, tipo: "privada" },
+    { nombre: "Universidad EAN",                                lat: 4.6530, lng: -74.0580, tipo: "privada" },
+    { nombre: "Universidad La Salle",                           lat: 4.6280, lng: -74.0840, tipo: "privada" },
+    { nombre: "Universidad Santo Tomás",                        lat: 4.6350, lng: -74.0830, tipo: "privada" },
+    { nombre: "Universidad Externado de Colombia",              lat: 4.5958, lng: -74.0684, tipo: "privada" },
+    { nombre: "Universidad de América",                         lat: 4.6280, lng: -74.0669, tipo: "privada" },
+    { nombre: "Universidad Jorge Tadeo Lozano",                 lat: 4.6006, lng: -74.0709, tipo: "privada" },
+    { nombre: "Universidad Piloto de Colombia",                 lat: 4.6311, lng: -74.0921, tipo: "privada" },
+    { nombre: "Universidad Cooperativa de Colombia",            lat: 4.6604, lng: -74.0560, tipo: "privada" },
+    { nombre: "Universidad Konrad Lorenz",                      lat: 4.6761, lng: -74.0530, tipo: "privada" },
+    { nombre: "Universidad UDCA",                               lat: 4.7451, lng: -74.0471, tipo: "privada" },
+    { nombre: "Uniminuto - Sede Principal",                     lat: 4.6875, lng: -74.0850, tipo: "privada" },
+    { nombre: "Uniminuto - Sede Bogotá Sur",                    lat: 4.5739, lng: -74.1317, tipo: "privada" },
+    { nombre: "Universidad Libre",                              lat: 4.6545, lng: -74.0850, tipo: "privada" },
+    { nombre: "Universidad Manuela Beltrán",                    lat: 4.6360, lng: -74.0629, tipo: "privada" },
+    { nombre: "Fundación Universitaria Los Libertadores",       lat: 4.7122, lng: -74.0532, tipo: "privada" },
+    { nombre: "Fundación Universitaria Monserrate",             lat: 4.6210, lng: -74.0730, tipo: "privada" },
+    { nombre: "Inpahu",                                         lat: 4.6477, lng: -74.0889, tipo: "privada" },
+    { nombre: "Universidad INCCA de Colombia",                  lat: 4.6400, lng: -74.0820, tipo: "privada" },
+    { nombre: "Escuela Colombiana de Ingeniería Julio Garavito",lat: 4.7588, lng: -74.0428, tipo: "privada" },
+    { nombre: "Escuela de Ingeniería de Antioquia (Bogotá)",    lat: 4.6543, lng: -74.0627, tipo: "privada" },
+    { nombre: "Universidad El Bosque",                          lat: 4.6930, lng: -74.0490, tipo: "privada" },
+    { nombre: "Universidad CES Bogotá",                         lat: 4.6631, lng: -74.0592, tipo: "privada" },
+    { nombre: "CEFIT",                                          lat: 4.6280, lng: -74.0750, tipo: "privada" },
+    { nombre: "Politécnico Grancolombiano",                     lat: 4.6423, lng: -74.0632, tipo: "privada" },
+    { nombre: "Universidad ECCI",                               lat: 4.6476, lng: -74.0887, tipo: "privada" },
+    { nombre: "Fundación Universitaria San Martín",             lat: 4.6600, lng: -74.0560, tipo: "privada" },
+    { nombre: "Universidad Antonio Nariño",                     lat: 4.6280, lng: -74.1010, tipo: "privada" },
+    { nombre: "Universidad Central",                            lat: 4.6360, lng: -74.0800, tipo: "privada" },
+    { nombre: "Universidad Sergio Arboleda",                    lat: 4.6625, lng: -74.0538, tipo: "privada" },
+    { nombre: "UNAD - Sede Nacional",                           lat: 4.6520, lng: -74.1040, tipo: "privada" },
   ];
 
-  const iconoUni = L.divIcon({
-    html: `<div style="width:32px;height:32px;background:#2563eb;border-radius:8px;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.2)">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-      </svg>
-    </div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-    className: ''
-  });
+  function crearIconoUni(color) {
+    return L.divIcon({
+      html: `<div style="width:32px;height:32px;background:${color};border-radius:8px;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.2)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </div>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      className: ''
+    });
+  }
+
+  const iconoPublica  = crearIconoUni('#2563eb');
+  const iconoPrivada  = crearIconoUni('#7c3aed');
 
   universidades.forEach(u => {
-    L.marker([u.lat, u.lng], { icon: iconoUni })
+    const esPublica  = u.tipo === 'publica';
+    const color      = esPublica ? '#2563eb' : '#7c3aed';
+    const badgeBg    = esPublica ? '#dbeafe' : '#ede9fe';
+    const badgeColor = esPublica ? '#1e40af' : '#6d28d9';
+    const tipoLabel  = esPublica ? 'Pública' : 'Privada';
+    const capa       = capas[esPublica ? 'uni-publica' : 'uni-privada'];
+    const icono      = esPublica ? iconoPublica : iconoPrivada;
+    const nombreEsc  = u.nombre.replace(/'/g, "\\'");
+
+    L.marker([u.lat, u.lng], { icon: icono })
       .bindPopup(`
-        <div style="font-family:Inter,sans-serif; padding:4px">
-          <strong style="color:#1e40af">${u.nombre}</strong><br>
-          <span style="font-size:12px; color:#6b7280">Zona universitaria</span>
+        <div style="font-family:Inter,sans-serif;padding:4px;min-width:190px">
+          <strong style="color:${color};font-size:13px">${u.nombre}</strong>
+          <div style="margin:6px 0 4px">
+            <span style="background:${badgeBg};color:${badgeColor};font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px">${tipoLabel}</span>
+          </div>
+          <div style="font-size:12px;color:#6b7280;margin-bottom:8px">📍 Bogotá D.C.</div>
+          <button onclick="window.trazarRutaAUniversidad(${u.lat},${u.lng},'${nombreEsc}')"
+            style="width:100%;padding:7px 0;background:${color};color:white;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">
+            Trazar ruta
+          </button>
         </div>
       `)
-      .addTo(capas.universidades);
+      .addTo(capa);
 
-    // Perímetro como círculo semitransparente
     L.circle([u.lat, u.lng], {
-      radius: 400,
-      color: '#2563eb',
-      fillColor: '#3b82f6',
-      fillOpacity: 0.08,
+      radius: 350,
+      color,
+      fillColor: color,
+      fillOpacity: 0.07,
       weight: 1.5,
       dashArray: '6 4'
-    }).addTo(capas.universidades);
+    }).addTo(capa);
   });
 
   // ============================================
@@ -1139,6 +1200,41 @@
     mostrarInfoRuta(label, distKm, minutos, esDomingo(), ruta.legs[0].steps);
   };
 
+  // Trazar ruta hacia una universidad desde el popup
+  window.trazarRutaAUniversidad = function(lat, lng, nombre) {
+    if (marcadorDestino) mapa.removeLayer(marcadorDestino);
+    marcadorDestino = L.marker([lat, lng], {
+      icon: L.divIcon({
+        html: `<div style="background:#7c3aed;color:white;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;white-space:nowrap;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.2);font-family:Inter,sans-serif">🏫 ${nombre}</div>`,
+        className: '', iconAnchor: [50, 16]
+      })
+    }).addTo(mapa);
+    puntoDestino = [lat, lng];
+    mapa.closePopup();
+
+    if (puntoOrigen) {
+      trazarRuta(puntoOrigen, puntoDestino);
+    } else {
+      navigator.geolocation?.getCurrentPosition(
+        (pos) => {
+          puntoOrigen = [pos.coords.latitude, pos.coords.longitude];
+          if (marcadorOrigen) mapa.removeLayer(marcadorOrigen);
+          marcadorOrigen = L.marker(puntoOrigen, {
+            icon: L.divIcon({
+              html: `<div style="background:var(--verde);color:white;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;white-space:nowrap;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.2);font-family:Inter,sans-serif">📍 Mi ubicación</div>`,
+              className: '', iconAnchor: [50, 16]
+            })
+          }).addTo(mapa);
+          trazarRuta(puntoOrigen, puntoDestino);
+        },
+        () => {
+          inputBusqueda.placeholder = 'Busca tu origen para trazar la ruta...';
+          showToast('Selecciona tu origen en la barra de búsqueda', 'info');
+        }
+      );
+    }
+  };
+
   // Limpiar ruta
   window.limpiarRuta = function() {
     if (rutaActual)     { mapa.removeLayer(rutaActual);     rutaActual = null; }
@@ -1259,7 +1355,8 @@
 
   // Event listeners for buttons
   document.getElementById('btn-ciclovias').addEventListener('click', () => toggleCapa('ciclovias'));
-  document.getElementById('btn-universidades').addEventListener('click', () => toggleCapa('universidades'));
+  document.getElementById('btn-uni-publica').addEventListener('click', () => toggleCapa('uni-publica'));
+  document.getElementById('btn-uni-privada').addEventListener('click', () => toggleCapa('uni-privada'));
   document.getElementById('btn-pelotones').addEventListener('click', () => toggleCapa('pelotones'));
   document.getElementById('btn-reportes').addEventListener('click', () => toggleCapa('reportes'));
   document.getElementById('btn-ubicacion').addEventListener('click', centrarUbicacion);
