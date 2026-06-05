@@ -303,6 +303,28 @@
     /* Leaflet overrides */
     .leaflet-control-zoom { border-radius: var(--radio-md) !important; border: 1px solid var(--gris-200) !important; box-shadow: var(--sombra-sm) !important; }
     .leaflet-control-zoom a { border-radius: 0 !important; color: var(--gris-600) !important; }
+
+    /* Widget de clima */
+    .clima-chip {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--blanco);
+      border: 1.5px solid var(--gris-200);
+      border-radius: 20px;
+      padding: 5px 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--gris-700);
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: var(--sombra-sm);
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .clima-chip:hover  { border-color: var(--verde); }
+    .clima-chip.alerta { border-color: #f59e0b; background: #fffbeb; color: #92400e; }
+    .clima-chip.cargando { color: var(--gris-400); border-style: dashed; }
   </style>
 </head>
 <body>
@@ -322,6 +344,10 @@
     <span class="mapa-logo-text">UniRutas</span>
   </a>
   <input class="mapa-busqueda" type="text" id="busqueda" placeholder="Buscar lugar en Bogotá...">
+  <div class="clima-chip cargando" id="clima-chip" onclick="mostrarDetalleClima()" title="Clima en tu zona">
+    <span id="clima-icono">⏳</span>
+    <span id="clima-temp">—</span>
+  </div>
 </div>
 
 <!-- Panel de capas -->
@@ -1215,7 +1241,15 @@
       </div>`;
     }).join('');
 
+    const llueveBanner = (climaData && climaData.probLluviaProxHora > 60)
+      ? `<div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:13px;color:#92400e;display:flex;align-items:center;gap:8px">
+           <span style="font-size:16px">🌧</span>
+           <span><strong>${climaData.probLluviaProxHora}% de probabilidad de lluvia</strong> en la próxima hora</span>
+         </div>`
+      : '';
+
     panel.innerHTML = `
+      ${llueveBanner}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div>
           <div style="font-size:13px;color:var(--gris-400);margin-bottom:2px">${tipo}</div>
@@ -1350,6 +1384,72 @@
     const key = `${tipo}-${modificador || ''}`;
     return map[key] || map[`${tipo}-`] || map['default'];
   }
+
+  // ============================================
+  // CLIMA — Open-Meteo (gratis, sin API key)
+  // ============================================
+  let climaData   = null;
+  let climaCoords = { lat: 4.7110, lng: -74.0721 };
+
+  async function obtenerClima(lat, lng) {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}` +
+      `&current=temperature_2m,precipitation,weathercode,windspeed_10m` +
+      `&hourly=precipitation_probability&timezone=America%2FBogota&forecast_days=1`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    const h    = new Date().getHours();
+    return {
+      temp:               Math.round(data.current.temperature_2m),
+      lluvia:             data.current.precipitation,
+      viento:             Math.round(data.current.windspeed_10m),
+      codigo:             data.current.weathercode,
+      probLluviaProxHora: data.hourly.precipitation_probability[h + 1]
+                          ?? data.hourly.precipitation_probability[h] ?? 0
+    };
+  }
+
+  function iconoClima(codigo, probLluvia) {
+    if (probLluvia > 60) return { icono: '🌧', alerta: true,  msg: '¡Va a llover! Considera otra opción' };
+    if (codigo >= 61)    return { icono: '🌧', alerta: true,  msg: 'Lluvia activa en tu ruta' };
+    if (codigo >= 51)    return { icono: '🌦', alerta: false, msg: 'Llovizna posible' };
+    if (codigo >= 1)     return { icono: '⛅', alerta: false, msg: 'Parcialmente nublado' };
+    return                      { icono: '☀️', alerta: false, msg: 'Buen clima para rodar' };
+  }
+
+  async function actualizarClima() {
+    try {
+      climaData = await obtenerClima(climaCoords.lat, climaCoords.lng);
+      const { icono, alerta } = iconoClima(climaData.codigo, climaData.probLluviaProxHora);
+      const chip    = document.getElementById('clima-chip');
+      const iconoEl = document.getElementById('clima-icono');
+      const tempEl  = document.getElementById('clima-temp');
+      if (!chip) return;
+      iconoEl.textContent = icono;
+      tempEl.textContent  = `${climaData.temp}°`;
+      chip.className = 'clima-chip' + (alerta ? ' alerta' : '');
+    } catch (err) {
+      console.warn('[UniRutas] Clima no disponible:', err.message);
+    }
+  }
+
+  window.mostrarDetalleClima = function() {
+    if (!climaData) { showToast('Obteniendo datos del clima…', 'info'); return; }
+    const { icono, msg } = iconoClima(climaData.codigo, climaData.probLluviaProxHora);
+    showToast(
+      `${icono} ${climaData.temp}°C · 💨 ${climaData.viento} km/h · 🌧 ${climaData.probLluviaProxHora}% lluvia — ${msg}`,
+      climaData.probLluviaProxHora > 60 ? 'warning' : 'info'
+    );
+  };
+
+  // Iniciar con ubicación del usuario (fallback: centro de Bogotá)
+  navigator.geolocation?.getCurrentPosition(
+    pos => {
+      climaCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      actualizarClima();
+    },
+    () => actualizarClima()
+  );
+  setInterval(actualizarClima, 30 * 60 * 1000);
 
   // ============================================
   // BOTTOM SHEET
