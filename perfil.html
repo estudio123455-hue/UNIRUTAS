@@ -1,562 +1,519 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UniRutas — Mi perfil</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Perfil — Movilidad Universitaria</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-bg: #ffffff;
+      --color-bg-secondary: #f4f4f2;
+      --color-text-primary: #1a1a1a;
+      --color-text-secondary: #6b6b68;
+      --color-text-tertiary: #9a9a97;
+      --color-border: rgba(0,0,0,0.12);
+      --color-border-hover: rgba(0,0,0,0.25);
+      --color-green-light: #E1F5EE;
+      --color-green-mid: #1D9E75;
+      --color-green-dark: #085041;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
     body {
-      background: var(--fondo);
-      padding-bottom: 80px;
-    }
-
-    /* Header */
-    .page-header {
-      position: sticky;
-      top: 0;
-      z-index: 40;
-      background: var(--blanco);
-      padding: 16px 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f0ed;
+      min-height: 100vh;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--borde);
-    }
-    .page-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--texto);
-    }
-    .btn-logout {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--fondo);
-      color: var(--texto-3);
-      border: none;
-      display: flex;
-      align-items: center;
       justify-content: center;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .btn-logout:hover {
-      background: var(--rojo-light);
-      color: var(--rojo);
+      padding: 2rem 1rem;
     }
 
-    /* Avatar y datos */
-    .profile-section {
-      background: var(--blanco);
-      padding: 24px 20px;
-      border-bottom: 1px solid var(--borde);
-    }
-    .profile-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-    .avatar-large {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: var(--verde);
-      color: var(--blanco);
-      font-size: 1.75rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .profile-info {
-      flex: 1;
-    }
-    .profile-name {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--texto);
-      margin-bottom: 4px;
-    }
-    .profile-email {
-      font-size: 0.875rem;
-      color: var(--texto-3);
-      margin-bottom: 8px;
-    }
-    .badges {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 500;
-    }
-    .badge-vehiculo {
-      background: var(--verde-light);
-      color: var(--verde-dark);
-    }
-    .badge-verified {
-      background: #dcfce7;
-      color: #166534;
-    }
-    .badge-unverified {
-      background: var(--borde);
-      color: var(--texto-3);
-    }
+    .page { max-width: 680px; width: 100%; }
 
-    /* Editar perfil */
-    .edit-section {
-      background: var(--blanco);
-      padding: 20px;
-      border-bottom: 1px solid var(--borde);
-    }
-    .edit-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-    .edit-title {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--texto);
-    }
-    .btn-edit {
-      padding: 8px 16px;
-      border-radius: var(--radio-md);
-      border: 1.5px solid var(--borde);
-      background: var(--blanco);
-      color: var(--texto-2);
-      font-size: 0.875rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .btn-edit:hover {
-      border-color: var(--verde);
-      color: var(--verde);
-    }
-
-    .edit-form {
-      display: none;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .edit-form.open {
-      display: flex;
-    }
-
-    .form-group {
-      margin-bottom: 0;
-    }
-    .form-label {
-      display: block;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: var(--texto-2);
-      margin-bottom: 6px;
-    }
-    .form-input {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1.5px solid var(--borde);
-      border-radius: var(--radio-md);
-      font-size: 0.95rem;
-      background: var(--blanco);
-      color: var(--texto);
-      transition: border-color 0.15s;
-    }
-    .form-input:focus {
-      outline: none;
-      border-color: var(--verde);
-    }
-
-    /* Vehículo selector */
-    .vehiculo-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-    .vehiculo-option {
+    /* COVER */
+    .cover {
       position: relative;
+      background: var(--color-bg-secondary);
+      border-radius: var(--radius-lg);
+      height: 130px;
+      border: 0.5px solid var(--color-border);
+      overflow: hidden;
     }
-    .vehiculo-option input {
-      position: absolute;
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .vehiculo-option label {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      padding: 12px 8px;
-      border: 1.5px solid var(--borde);
-      border-radius: var(--radio-md);
-      background: var(--blanco);
-      cursor: pointer;
-      transition: all 0.15s;
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: var(--texto-3);
-    }
-    .vehiculo-option input:checked + label {
-      border-color: var(--verde);
-      background: var(--verde-light);
-      color: var(--verde-dark);
-    }
-    .vehiculo-option label svg {
-      width: 24px;
-      height: 24px;
-      color: var(--texto-3);
-    }
-    .vehiculo-option input:checked + label svg {
-      color: var(--verde-dark);
+    .cover svg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.18; }
+    .cover-badge {
+      position: absolute; bottom: 12px; left: 16px;
+      background: var(--color-green-light); color: var(--color-green-dark);
+      font-size: 11px; font-weight: 500; padding: 3px 10px;
+      border-radius: 20px; display: flex; align-items: center; gap: 4px;
     }
 
-    .form-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 8px;
+    /* AVATAR & USER INFO */
+    .avatar-wrap {
+      display: flex; align-items: flex-end; gap: 14px;
+      padding: 0 1.25rem; margin-top: -28px; margin-bottom: 14px;
     }
+    .avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: var(--color-green-mid);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 500; color: var(--color-green-light);
+      border: 3px solid var(--color-bg); flex-shrink: 0;
+      overflow: hidden; cursor: pointer; position: relative;
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.15s; border-radius: 50%;
+    }
+    .avatar:hover .avatar-overlay { opacity: 1; }
+    .avatar-overlay i { color: #fff; font-size: 20px; }
+    .user-info { padding-bottom: 4px; flex: 1; }
+    .user-name { font-size: 18px; font-weight: 500; color: var(--color-text-primary); line-height: 1.2; }
+    .user-sub { font-size: 13px; color: var(--color-text-secondary); margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+    .edit-btn button {
+      font-size: 13px; padding: 6px 14px; border-radius: var(--radius-md);
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      background: transparent; border: 0.5px solid var(--color-border-hover);
+      color: var(--color-text-primary); transition: background 0.15s;
+      align-self: flex-end; margin-bottom: 4px;
+    }
+    .edit-btn button:hover { background: var(--color-bg-secondary); }
 
-    /* Secciones */
-    .section-header {
-      padding: 20px 20px 12px;
+    /* SECTIONS */
+    .card {
+      background: var(--color-bg);
+      border: 0.5px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
     }
-    .section-title {
-      font-size: 1.125rem;
-      font-weight: 700;
-      color: var(--texto);
-      margin-bottom: 12px;
+    .sec-label {
+      font-size: 12px; color: var(--color-text-tertiary);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 12px; font-weight: 500;
+      display: flex; justify-content: space-between; align-items: center;
     }
+    .sec-label button {
+      font-size: 12px; padding: 4px 10px; cursor: pointer;
+      border-radius: var(--radius-md); background: transparent;
+      border: 0.5px solid var(--color-border-hover);
+      color: var(--color-text-primary); display: flex; align-items: center; gap: 4px;
+      transition: background 0.15s;
+    }
+    .sec-label button:hover { background: var(--color-bg-secondary); }
 
-    /* Tabs */
-    .tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-    .tab-btn {
-      flex: 1;
-      padding: 10px;
-      border-radius: var(--radio-md);
-      border: 1.5px solid var(--gris-200);
-      background: var(--blanco);
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: var(--gris-700);
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .tab-btn:hover {
-      background: var(--gris-50);
-    }
-    .tab-btn.active {
-      background: var(--verde);
-      border-color: var(--verde);
-      color: var(--blanco);
-    }
-
-    /* Lista de pelotones */
-    .pelotones-list {
-      padding: 0 20px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .peloton-item {
-      background: var(--blanco);
-      border-radius: var(--radio-lg);
-      border: 1px solid var(--gris-200);
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      box-shadow: var(--sombra-sm);
-    }
-    .peloton-route {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 600;
-      color: var(--gris-900);
-      font-size: 0.95rem;
-    }
-    .peloton-meta {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.8rem;
-      color: var(--gris-500);
-    }
-    .meta-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .peloton-footer {
-      display: flex;
-      justify-content: flex-end;
-      padding-top: 8px;
-      border-top: 1px solid var(--gris-100);
-    }
-    .btn-ver-mapa {
-      padding: 8px 16px;
-      border-radius: var(--radio-md);
-      border: 1.5px solid var(--gris-200);
-      background: var(--blanco);
-      color: var(--gris-700);
-      font-size: 0.875rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-      text-decoration: none;
-    }
-    .btn-ver-mapa:hover {
-      border-color: var(--verde);
-      color: var(--verde);
-    }
-
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: 32px 20px;
-      color: var(--gris-500);
-    }
-    .empty-state svg {
-      width: 48px;
-      height: 48px;
-      margin-bottom: 12px;
-      color: var(--gris-300);
-    }
-    .empty-state p {
-      font-size: 0.875rem;
-    }
-
-    /* Estadísticas */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      padding: 0 20px 16px;
-    }
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
     .stat-card {
-      background: var(--blanco);
-      border-radius: var(--radio-lg);
-      border: 1px solid var(--gris-200);
-      padding: 16px;
-      text-align: center;
-      box-shadow: var(--sombra-sm);
+      background: var(--color-bg-secondary); border-radius: var(--radius-md);
+      padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
     }
-    .stat-value {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: var(--verde);
-      margin-bottom: 4px;
+    .stat-val { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+    .stat-lbl { font-size: 12px; color: var(--color-text-secondary); }
+
+    /* TRANSPORT */
+    .transport-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .transport-card {
+      background: var(--color-bg-secondary); border-radius: var(--radius-md);
+      padding: 14px 12px; display: flex; flex-direction: column;
+      align-items: center; gap: 6px; cursor: pointer;
+      border: 1.5px solid transparent; transition: border-color 0.15s, background 0.15s;
     }
-    .stat-label {
-      font-size: 0.75rem;
-      color: var(--gris-500);
-      font-weight: 500;
+    .transport-card.active { border-color: var(--color-green-mid); background: var(--color-green-light); }
+    .transport-card .t-icon { font-size: 26px; color: var(--color-text-tertiary); }
+    .transport-card.active .t-icon { color: var(--color-green-dark); }
+    .transport-card .t-label { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); }
+    .transport-card.active .t-label { color: var(--color-green-dark); }
+
+    /* ROUTES */
+    .route-list { display: flex; flex-direction: column; gap: 8px; }
+    .route-item {
+      background: var(--color-bg); border: 0.5px solid var(--color-border);
+      border-radius: var(--radius-md); padding: 10px 14px;
+      display: flex; align-items: center; gap: 12px;
     }
+    .route-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .route-info { flex: 1; }
+    .route-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+    .route-meta { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+    .route-tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; flex-shrink: 0; }
+    .tag-safe { background: #E1F5EE; color: #085041; }
+    .tag-fast { background: #E6F1FB; color: #0C447C; }
+    .tag-bike { background: #EEEDFE; color: #3C3489; }
+
+    /* ACTIVITY */
+    .activity-list { display: flex; flex-direction: column; gap: 6px; }
+    .activity-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px; background: var(--color-bg-secondary);
+      border-radius: var(--radius-md);
+    }
+    .act-icon { font-size: 16px; color: var(--color-text-tertiary); }
+    .act-text { font-size: 13px; color: var(--color-text-primary); flex: 1; }
+    .act-time { font-size: 12px; color: var(--color-text-tertiary); }
+
+    /* MODAL */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 100;
+      align-items: center; justify-content: center; padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--color-bg); border-radius: var(--radius-lg);
+      border: 0.5px solid var(--color-border);
+      padding: 1.5rem; width: 100%; max-width: 420px;
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .modal-title { font-size: 16px; font-weight: 500; color: var(--color-text-primary); }
+    .modal-close {
+      background: none; border: none; cursor: pointer;
+      font-size: 20px; color: var(--color-text-secondary); line-height: 1;
+    }
+    .form-group { margin-bottom: 1rem; }
+    .form-label { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 6px; display: block; }
+    .form-input {
+      width: 100%; padding: 8px 12px; border-radius: var(--radius-md);
+      border: 0.5px solid var(--color-border-hover);
+      font-size: 14px; color: var(--color-text-primary);
+      background: var(--color-bg);
+      outline: none; transition: border-color 0.15s;
+    }
+    .form-input:focus { border-color: var(--color-green-mid); }
+    .avatar-upload {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 1rem;
+    }
+    .avatar-preview {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: var(--color-green-mid);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 500; color: var(--color-green-light);
+      overflow: hidden; flex-shrink: 0;
+    }
+    .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .upload-btn {
+      font-size: 13px; padding: 7px 14px; cursor: pointer;
+      border-radius: var(--radius-md); background: transparent;
+      border: 0.5px solid var(--color-border-hover);
+      color: var(--color-text-primary); transition: background 0.15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .upload-btn:hover { background: var(--color-bg-secondary); }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; }
+    .btn-cancel {
+      padding: 8px 16px; border-radius: var(--radius-md); cursor: pointer;
+      background: transparent; border: 0.5px solid var(--color-border-hover);
+      font-size: 13px; color: var(--color-text-secondary); transition: background 0.15s;
+    }
+    .btn-cancel:hover { background: var(--color-bg-secondary); }
+    .btn-save {
+      padding: 8px 18px; border-radius: var(--radius-md); cursor: pointer;
+      background: var(--color-green-mid); border: none;
+      font-size: 13px; color: #fff; font-weight: 500;
+      transition: opacity 0.15s;
+    }
+    .btn-save:hover { opacity: 0.88; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+      background: #1a1a1a; color: #fff; font-size: 13px;
+      padding: 10px 18px; border-radius: 20px; z-index: 200;
+      opacity: 0; transition: opacity 0.2s; pointer-events: none;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .toast.show { opacity: 1; }
   </style>
 </head>
 <body>
 
-<!-- Header -->
-<div class="page-header">
-  <h1 class="page-title">Mi perfil</h1>
-  <button class="btn-logout" onclick="cerrarSesion()" aria-label="Cerrar sesión">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-    </svg>
-  </button>
-</div>
+<div class="page">
 
-<!-- Avatar y datos -->
-<div class="profile-section">
-  <div class="profile-header">
-    <div class="avatar-large" id="avatar">--</div>
-    <div class="profile-info">
-      <h2 class="profile-name" id="profile-name">Cargando...</h2>
-      <p class="profile-email" id="profile-email">...</p>
-      <div class="badges">
-        <span class="badge badge-vehiculo" id="badge-vehiculo">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/>
-            <path d="M15 6a1 1 0 000-2h-3l-3 9H5.5"/><path d="M12 6l-3 9 6.5.5"/>
-          </svg>
-          <span id="vehiculo-text">--</span>
-        </span>
-        <span class="badge" id="badge-email">
-          <span id="email-status">--</span>
-        </span>
+  <!-- COVER -->
+  <div class="cover">
+    <svg viewBox="0 0 680 130" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+          <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#1D9E75" stroke-width="0.8"/>
+        </pattern>
+      </defs>
+      <rect width="680" height="130" fill="url(#grid)"/>
+      <circle cx="520" cy="65" r="80" fill="#1D9E75" opacity="0.3"/>
+      <circle cx="610" cy="10" r="55" fill="#0F6E56" opacity="0.2"/>
+      <path d="M 80 90 Q 200 30 340 65 T 620 55" stroke="#5DCAA5" stroke-width="2.5" fill="none" opacity="0.7"/>
+      <path d="M 0 100 Q 150 60 300 85 T 680 65" stroke="#9FE1CB" stroke-width="1.5" fill="none" opacity="0.5"/>
+    </svg>
+    <span class="cover-badge">
+      <i class="ti ti-shield-check" aria-hidden="true"></i> Viajero seguro
+    </span>
+  </div>
+
+  <!-- AVATAR + INFO -->
+  <div class="avatar-wrap">
+    <div class="avatar" id="mainAvatar" onclick="openModal()" title="Cambiar foto">
+      <span id="avatarInitials">LA</span>
+      <img id="avatarImg" src="" alt="Foto de perfil" style="display:none;" />
+      <div class="avatar-overlay" aria-hidden="true"><i class="ti ti-camera"></i></div>
+    </div>
+    <div class="user-info">
+      <div class="user-name" id="displayName">Laura Andrade</div>
+      <div class="user-sub">
+        <i class="ti ti-building" aria-hidden="true"></i>
+        <span id="displayUniversity">Universidad Nacional</span> ·
+        <span id="displayCareer">Ingeniería</span>
+      </div>
+    </div>
+    <div class="edit-btn">
+      <button onclick="openModal()">
+        <i class="ti ti-edit" aria-hidden="true"></i> Editar perfil
+      </button>
+    </div>
+  </div>
+
+  <!-- ESTADÍSTICAS -->
+  <div class="card">
+    <div class="sec-label">Mis estadísticas</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <i class="ti ti-route" aria-hidden="true" style="font-size:18px; color:var(--color-text-tertiary);"></i>
+        <div class="stat-val">142</div>
+        <div class="stat-lbl">Rutas recorridas</div>
+      </div>
+      <div class="stat-card">
+        <i class="ti ti-road" aria-hidden="true" style="font-size:18px; color:var(--color-text-tertiary);"></i>
+        <div class="stat-val">386 km</div>
+        <div class="stat-lbl">Distancia total</div>
+      </div>
+      <div class="stat-card">
+        <i class="ti ti-leaf" aria-hidden="true" style="font-size:18px; color:var(--color-text-tertiary);"></i>
+        <div class="stat-val">28 kg</div>
+        <div class="stat-lbl">CO₂ ahorrado</div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Editar perfil -->
-<div class="edit-section">
-  <div class="edit-header">
-    <span class="edit-title">Editar perfil</span>
-    <button class="btn-edit" id="btn-toggle-edit" onclick="toggleEditForm()">Editar</button>
+  <!-- MODO DE TRANSPORTE -->
+  <div class="card">
+    <div class="sec-label">Modo de transporte preferido</div>
+    <div class="transport-grid">
+      <div class="transport-card active" id="t-bike" onclick="selectTransport('t-bike')">
+        <i class="ti ti-bike t-icon" aria-hidden="true"></i>
+        <span class="t-label">Bicicleta</span>
+      </div>
+      <div class="transport-card" id="t-scooter" onclick="selectTransport('t-scooter')">
+        <i class="ti ti-scooter t-icon" aria-hidden="true"></i>
+        <span class="t-label">Patineta</span>
+      </div>
+      <div class="transport-card" id="t-walk" onclick="selectTransport('t-walk')">
+        <i class="ti ti-walk t-icon" aria-hidden="true"></i>
+        <span class="t-label">Caminando</span>
+      </div>
+    </div>
   </div>
 
-  <form class="edit-form" id="edit-form" onsubmit="guardarCambios(event)">
-    <div class="form-group">
-      <label class="form-label">Nombre completo</label>
-      <input type="text" class="form-input" id="edit-nombre" required>
+  <!-- RUTAS FAVORITAS -->
+  <div class="card">
+    <div class="sec-label">
+      Rutas favoritas
+      <button onclick="alert('Conecta esta acción con tu mapa para añadir rutas.')">
+        <i class="ti ti-plus" aria-hidden="true"></i> Añadir
+      </button>
+    </div>
+    <div class="route-list">
+      <div class="route-item">
+        <div class="route-dot" style="background:#1D9E75;"></div>
+        <div class="route-info">
+          <div class="route-name">Campus Sur → Biblioteca Central</div>
+          <div class="route-meta"><i class="ti ti-clock" aria-hidden="true"></i> 12 min · 3.2 km · Ciclovía</div>
+        </div>
+        <span class="route-tag tag-safe">Segura</span>
+      </div>
+      <div class="route-item">
+        <div class="route-dot" style="background:#378ADD;"></div>
+        <div class="route-info">
+          <div class="route-name">Residencias → Facultad de Ciencias</div>
+          <div class="route-meta"><i class="ti ti-clock" aria-hidden="true"></i> 8 min · 2.1 km · Calle compartida</div>
+        </div>
+        <span class="route-tag tag-fast">Rápida</span>
+      </div>
+      <div class="route-item">
+        <div class="route-dot" style="background:#7F77DD;"></div>
+        <div class="route-info">
+          <div class="route-name">Estación Metro → Entrada Norte</div>
+          <div class="route-meta"><i class="ti ti-clock" aria-hidden="true"></i> 18 min · 4.7 km · Ciclovía exclusiva</div>
+        </div>
+        <span class="route-tag tag-bike">Ciclovía</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVIDAD RECIENTE -->
+  <div class="card">
+    <div class="sec-label">Actividad reciente</div>
+    <div class="activity-list">
+      <div class="activity-item">
+        <i class="ti ti-map-pin act-icon" aria-hidden="true"></i>
+        <span class="act-text">Usaste la ruta Campus Sur → Biblioteca</span>
+        <span class="act-time">Hoy, 8:10 am</span>
+      </div>
+      <div class="activity-item">
+        <i class="ti ti-star act-icon" aria-hidden="true"></i>
+        <span class="act-text">Marcaste como favorita: Estación Metro → Norte</span>
+        <span class="act-time">Ayer</span>
+      </div>
+      <div class="activity-item">
+        <i class="ti ti-alert-triangle act-icon" aria-hidden="true"></i>
+        <span class="act-text">Reportaste zona insegura en Av. 26</span>
+        <span class="act-time">Hace 3 días</span>
+      </div>
+      <div class="activity-item">
+        <i class="ti ti-route act-icon" aria-hidden="true"></i>
+        <span class="act-text">Recorriste 12.4 km en bicicleta</span>
+        <span class="act-time">Hace 4 días</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL EDITAR PERFIL -->
+<div class="modal-overlay" id="editModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Editar perfil</span>
+      <button class="modal-close" onclick="closeModal()" aria-label="Cerrar">
+        <i class="ti ti-x" aria-hidden="true"></i>
+      </button>
     </div>
 
-    <div class="form-group">
-      <label class="form-label">Barrio</label>
-      <input type="text" class="form-input" id="edit-barrio">
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">Universidad o empresa</label>
-      <input type="text" class="form-input" id="edit-universidad" list="unis-list">
-      <datalist id="unis-list">
-        <option value="Universidad Nacional de Colombia">
-        <option value="Universidad de los Andes">
-        <option value="Universidad Javeriana">
-        <option value="Universidad Distrital">
-        <option value="Universidad del Rosario">
-        <option value="Universidad EAFIT">
-        <option value="Universidad de Antioquia">
-        <option value="Universidad del Valle">
-        <option value="Universidad Pedagógica Nacional">
-        <option value="SENA">
-      </datalist>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">Vehículo principal</label>
-      <div class="vehiculo-grid">
-        <div class="vehiculo-option">
-          <input type="radio" name="edit-vehiculo" id="ev-bici" value="bicicleta">
-          <label for="ev-bici">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/>
-              <path d="M15 6a1 1 0 000-2h-3l-3 9H5.5"/><path d="M12 6l-3 9 6.5.5"/>
-            </svg>
-            Bicicleta
-          </label>
-        </div>
-        <div class="vehiculo-option">
-          <input type="radio" name="edit-vehiculo" id="ev-patineta" value="patineta">
-          <label for="ev-patineta">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="7" cy="19" r="2"/><circle cx="17" cy="19" r="2"/>
-              <path d="M3 7h2l4 8h6l2-4H9"/>
-            </svg>
-            Patineta
-          </label>
-        </div>
-        <div class="vehiculo-option">
-          <input type="radio" name="edit-vehiculo" id="ev-pie" value="pie">
-          <label for="ev-pie">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="5" r="1"/>
-              <path d="M9 20l3-8 2 3 2-3 3 8M9 20h6"/>
-              <path d="M12 9l-1 4"/>
-            </svg>
-            A pie
-          </label>
-        </div>
+    <div class="avatar-upload">
+      <div class="avatar-preview" id="previewAvatar">
+        <span id="previewInitials">LA</span>
+        <img id="previewImg" src="" alt="" style="display:none;" />
+      </div>
+      <div>
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+          <i class="ti ti-upload" aria-hidden="true"></i> Subir foto
+        </button>
+        <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handlePhoto(event)" />
+        <p style="font-size:12px; color:var(--color-text-tertiary); margin-top:5px;">JPG, PNG o GIF. Máx 2 MB</p>
       </div>
     </div>
 
-    <div class="form-actions">
-      <button type="button" class="btn btn-secondary" onclick="toggleEditForm()">Cancelar</button>
-      <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    <div class="form-group">
+      <label class="form-label" for="inputName">Nombre completo</label>
+      <input class="form-input" type="text" id="inputName" value="Laura Andrade" placeholder="Tu nombre" />
     </div>
-  </form>
-</div>
+    <div class="form-group">
+      <label class="form-label" for="inputUniversity">Universidad</label>
+      <input class="form-input" type="text" id="inputUniversity" value="Universidad Nacional" placeholder="Tu universidad" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="inputCareer">Carrera / Facultad</label>
+      <input class="form-input" type="text" id="inputCareer" value="Ingeniería" placeholder="Tu carrera" />
+    </div>
 
-<!-- Mis Pelotones -->
-<div class="section-header">
-  <h3 class="section-title">Mis pelotones</h3>
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="creados" onclick="setTab('creados')">Creados</button>
-    <button class="tab-btn" data-tab="unidos" onclick="setTab('unidos')">Unidos</button>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveProfile()">Guardar cambios</button>
+    </div>
   </div>
 </div>
 
-<div class="pelotones-list" id="pelotones-list">
-  <div class="empty-state">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
-    </svg>
-    <p>Cargando pelotones...</p>
-  </div>
+<!-- TOAST -->
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <i class="ti ti-check" aria-hidden="true"></i> Perfil actualizado
 </div>
 
-<!-- Estadísticas -->
-<div class="section-header">
-  <h3 class="section-title">Estadísticas</h3>
-</div>
+<script>
+  let pendingPhoto = null;
 
-<div class="stats-grid">
-  <div class="stat-card">
-    <div class="stat-value" id="stat-creados">0</div>
-    <div class="stat-label">Pelotones creados</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-value" id="stat-unidos">0</div>
-    <div class="stat-label">Pelotones unidos</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-value" id="stat-reportes">0</div>
-    <div class="stat-label">Reportes enviados</div>
-  </div>
-</div>
+  function openModal() {
+    document.getElementById('inputName').value = document.getElementById('displayName').textContent;
+    document.getElementById('inputUniversity').value = document.getElementById('displayUniversity').textContent;
+    document.getElementById('inputCareer').value = document.getElementById('displayCareer').textContent;
+    document.getElementById('editModal').classList.add('open');
+  }
 
-<!-- Navbar -->
-<nav class="navbar">
-  <a href="index.html" class="navbar-item">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polygon points="3 11 22 2 13 21 11 13 3 11"/>
-    </svg>
-    Mapa
-  </a>
-  <a href="pelotones.html" class="navbar-item">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
-    </svg>
-    Pelotones
-  </a>
-  <a href="reportes.html" class="navbar-item">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-    </svg>
-    Reportes
-  </a>
-  <a href="perfil.html" class="navbar-item active">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
-    </svg>
-    Perfil
-  </a>
-</nav>
+  function closeModal() {
+    document.getElementById('editModal').classList.remove('open');
+    pendingPhoto = null;
+    syncPreviewToMain(false);
+  }
 
-<script type="module" src="./perfil.js"></script>
+  function selectTransport(id) {
+    ['t-bike','t-scooter','t-walk'].forEach(t => {
+      document.getElementById(t).classList.remove('active');
+    });
+    document.getElementById(id).classList.add('active');
+  }
 
+  function getInitials(name) {
+    return name.trim().split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+  }
+
+  function handlePhoto(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      pendingPhoto = ev.target.result;
+      const prev = document.getElementById('previewImg');
+      prev.src = pendingPhoto;
+      prev.style.display = 'block';
+      document.getElementById('previewInitials').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function syncPreviewToMain(apply) {
+    if (apply && pendingPhoto) {
+      const img = document.getElementById('avatarImg');
+      img.src = pendingPhoto;
+      img.style.display = 'block';
+      document.getElementById('avatarInitials').style.display = 'none';
+    }
+    // reset preview
+    document.getElementById('previewImg').src = '';
+    document.getElementById('previewImg').style.display = 'none';
+    document.getElementById('previewInitials').style.display = 'block';
+  }
+
+  function saveProfile() {
+    const name = document.getElementById('inputName').value.trim() || 'Usuario';
+    const university = document.getElementById('inputUniversity').value.trim();
+    const career = document.getElementById('inputCareer').value.trim();
+    const initials = getInitials(name);
+
+    document.getElementById('displayName').textContent = name;
+    document.getElementById('displayUniversity').textContent = university;
+    document.getElementById('displayCareer').textContent = career;
+    document.getElementById('avatarInitials').textContent = initials;
+    document.getElementById('previewInitials').textContent = initials;
+
+    syncPreviewToMain(true);
+    closeModal();
+    showToast();
+  }
+
+  function showToast() {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // Cerrar modal al clicar fuera
+  document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+</script>
 </body>
 </html>
