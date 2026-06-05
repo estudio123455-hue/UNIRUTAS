@@ -340,16 +340,17 @@
   <!-- AVATAR + INFO -->
   <div class="avatar-wrap">
     <div class="avatar" id="mainAvatar" onclick="openModal()" title="Cambiar foto">
-      <span id="avatarInitials">LA</span>
+      <span id="avatarInitials"></span>
       <img id="avatarImg" src="" alt="Foto de perfil" style="display:none;" />
       <div class="avatar-overlay" aria-hidden="true"><i class="ti ti-camera"></i></div>
     </div>
     <div class="user-info">
-      <div class="user-name" id="displayName">Laura Andrade</div>
-      <div class="user-sub">
+      <div class="user-name" id="displayName"></div>
+      <div class="user-sub" id="user-sub" style="display:none;">
         <i class="ti ti-building" aria-hidden="true"></i>
-        <span id="displayUniversity">Universidad Nacional</span> ·
-        <span id="displayCareer">Ingeniería</span>
+        <span id="displayUniversity"></span>
+        <span id="sep-sub" style="display:none;"> · </span>
+        <span id="displayCareer"></span>
       </div>
     </div>
     <div class="edit-btn">
@@ -404,34 +405,11 @@
   <div class="card">
     <div class="sec-label">
       Rutas favoritas
-      <button onclick="alert('Conecta esta acción con tu mapa para añadir rutas.')">
-        <i class="ti ti-plus" aria-hidden="true"></i> Añadir
-      </button>
     </div>
-    <div class="route-list">
-      <div class="route-item">
-        <div class="route-dot" style="background:#1D9E75;"></div>
-        <div class="route-info">
-          <div class="route-name">Campus Sur → Biblioteca Central</div>
-          <div class="route-meta"><i class="ti ti-clock" aria-hidden="true"></i> 12 min · 3.2 km · Ciclovía</div>
-        </div>
-        <span class="route-tag tag-safe">Segura</span>
-      </div>
-      <div class="route-item">
-        <div class="route-dot" style="background:#378ADD;"></div>
-        <div class="route-info">
-          <div class="route-name">Residencias → Facultad de Ciencias</div>
-          <div class="route-meta"><i class="ti ti-clock" aria-hidden="true"></i> 8 min · 2.1 km · Calle compartida</div>
-        </div>
-        <span class="route-tag tag-fast">Rápida</span>
-      </div>
-      <div class="route-item">
-        <div class="route-dot" style="background:#7F77DD;"></div>
-        <div class="route-info">
-          <div class="route-name">Estación Metro → Entrada Norte</div>
-          <div class="route-meta"><i class="ti ti-clock" aria-hidden="true"></i> 18 min · 4.7 km · Ciclovía exclusiva</div>
-        </div>
-        <span class="route-tag tag-bike">Ciclovía</span>
+    <div class="route-list" id="route-list">
+      <div style="text-align:center; padding:20px 0; color:var(--color-text-tertiary); font-size:13px;">
+        <i class="ti ti-route-off" style="font-size:28px; display:block; margin-bottom:8px;" aria-hidden="true"></i>
+        Aún no tienes rutas guardadas
       </div>
     </div>
   </div>
@@ -439,26 +417,10 @@
   <!-- ACTIVIDAD RECIENTE -->
   <div class="card">
     <div class="sec-label">Actividad reciente</div>
-    <div class="activity-list">
-      <div class="activity-item">
-        <i class="ti ti-map-pin act-icon" aria-hidden="true"></i>
-        <span class="act-text">Usaste la ruta Campus Sur → Biblioteca</span>
-        <span class="act-time">Hoy, 8:10 am</span>
-      </div>
-      <div class="activity-item">
-        <i class="ti ti-star act-icon" aria-hidden="true"></i>
-        <span class="act-text">Marcaste como favorita: Estación Metro → Norte</span>
-        <span class="act-time">Ayer</span>
-      </div>
-      <div class="activity-item">
-        <i class="ti ti-alert-triangle act-icon" aria-hidden="true"></i>
-        <span class="act-text">Reportaste zona insegura en Av. 26</span>
-        <span class="act-time">Hace 3 días</span>
-      </div>
-      <div class="activity-item">
-        <i class="ti ti-route act-icon" aria-hidden="true"></i>
-        <span class="act-text">Recorriste 12.4 km en bicicleta</span>
-        <span class="act-time">Hace 4 días</span>
+    <div class="activity-list" id="activity-list">
+      <div style="text-align:center; padding:20px 0; color:var(--color-text-tertiary); font-size:13px;">
+        <i class="ti ti-clock-off" style="font-size:28px; display:block; margin-bottom:8px;" aria-hidden="true"></i>
+        No hay actividad reciente
       </div>
     </div>
   </div>
@@ -497,7 +459,7 @@
 
     <div class="avatar-upload">
       <div class="avatar-preview" id="previewAvatar">
-        <span id="previewInitials">LA</span>
+        <span id="previewInitials"></span>
         <img id="previewImg" src="" alt="" style="display:none;" />
       </div>
       <div>
@@ -511,15 +473,15 @@
 
     <div class="form-group">
       <label class="form-label" for="inputName">Nombre completo</label>
-      <input class="form-input" type="text" id="inputName" value="Laura Andrade" placeholder="Tu nombre" />
+      <input class="form-input" type="text" id="inputName" value="" placeholder="Tu nombre" />
     </div>
     <div class="form-group">
       <label class="form-label" for="inputUniversity">Universidad</label>
-      <input class="form-input" type="text" id="inputUniversity" value="Universidad Nacional" placeholder="Tu universidad" />
+      <input class="form-input" type="text" id="inputUniversity" value="" placeholder="Tu universidad" />
     </div>
     <div class="form-group">
       <label class="form-label" for="inputCareer">Carrera / Facultad</label>
-      <input class="form-input" type="text" id="inputCareer" value="Ingeniería" placeholder="Tu carrera" />
+      <input class="form-input" type="text" id="inputCareer" value="" placeholder="Tu carrera" />
     </div>
 
     <div class="modal-actions">
@@ -669,9 +631,12 @@
     document.getElementById('avatarInitials').textContent = iniciales;
     document.getElementById('previewInitials').textContent = iniciales;
 
-    // Universidad y carrera
-    document.getElementById('displayUniversity').textContent = datos.universidad || '';
-    document.getElementById('displayCareer').textContent = carrera;
+    // Universidad, carrera y separador
+    const uni = datos.universidad || '';
+    document.getElementById('displayUniversity').textContent = uni;
+    document.getElementById('displayCareer').textContent    = carrera;
+    document.getElementById('sep-sub').style.display        = (uni && carrera) ? '' : 'none';
+    document.getElementById('user-sub').style.display       = (uni || carrera) ? '' : 'none';
 
     // Foto de perfil (Google o subida)
     const photoURL = datos.photoURL || '';
