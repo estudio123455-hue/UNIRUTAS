@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>UniRutas — Historial</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="css/styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -358,12 +358,12 @@
 </nav>
 
 <script type="module">
-  import { auth, db } from './firebase.js';
+  import { auth, db } from './js/firebase.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import {
     collection, onSnapshot, query, where, or, orderBy
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { showToast } from './toast.js';
+  import { showToast } from './js/toast.js';
 
   // Auth guard
   onAuthStateChanged(auth, (user) => {

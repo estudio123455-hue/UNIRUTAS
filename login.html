@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>UniRutas — Iniciar sesión</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="css/styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -100,13 +100,13 @@
 </div>
 
 <script type="module">
-  import { auth } from './firebase.js';
+  import { auth } from './js/firebase.js';
   import {
     signInWithEmailAndPassword,
     sendPasswordResetEmail
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { showToast } from './toast.js';
+  import { showToast } from './js/toast.js';
 
   // Si ya hay sesión, redirigir al mapa
   onAuthStateChanged(auth, (user) => {
