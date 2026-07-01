@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Semilla — Reportes UniRutas</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #f5f5f5;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 20px;
+  }
+  .card {
+    background: white; border-radius: 16px; padding: 32px;
+    max-width: 480px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+  }
+  h1 { font-size: 1.3rem; margin-bottom: 6px; }
+  p  { color: #666; font-size: 0.9rem; line-height: 1.5; margin-bottom: 20px; }
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 0.75rem; font-weight: 600; margin-bottom: 16px;
+  }
+  .badge.ready { background: #d1fae5; color: #065f46; }
+  .badge.waiting { background: #fef3c7; color: #92400e; }
+  .badge.error  { background: #fee2e2; color: #991b1b; }
+  ul { list-style: none; margin-bottom: 20px; }
+  li {
+    padding: 10px 12px; border-radius: 10px; background: #f9fafb;
+    margin-bottom: 8px; font-size: 0.85rem; display: flex;
+    align-items: center; gap: 8px;
+  }
+  li .emoji { font-size: 1.3rem; }
+  li .coords { color: #999; font-size: 0.75rem; }
+  button {
+    width: 100%; padding: 12px; border: none; border-radius: 10px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    background: #059669; color: white; transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.9; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.danger { background: #dc2626; }
+  .msg { margin-top: 16px; padding: 12px; border-radius: 10px; font-size: 0.85rem; display: none; }
+  .msg.ok { display: block; background: #d1fae5; color: #065f46; }
+  .msg.err { display: block; background: #fee2e2; color: #991b1b; }
+  .msg.info { display: block; background: #e0f2fe; color: #075985; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🌱 Semilla de reportes</h1>
+  <p>Agrega datos de prueba a la colección <code>reportes</code> para que nadie llegue a un mapa vacío.</p>
+  <div class="badge waiting" id="auth-badge">⏳ Verificando autenticación...</div>
+
+  <ul id="lista-reportes">
+    <li><span class="emoji">🕳️</span> <strong>Hueco</strong> — Cra 7 con Calle 45, Teusaquillo <span class="coords">(4.6295, -74.0655)</span></li>
+    <li><span class="emoji">🌊</span> <strong>Inundación</strong> — Av. Calle 80 con Cra 30, cerca U. Nacional <span class="coords">(4.6470, -74.0800)</span></li>
+    <li><span class="emoji">⚠️</span> <strong>Peligro</strong> — TM Calle 26, costado Museo Nacional <span class="coords">(4.6150, -74.0700)</span></li>
+  </ul>
+
+  <button id="btn-sembrar" disabled>Generar reportes de prueba</button>
+  <div class="msg" id="msg"></div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCRXp_TSE4trf7HNP5dA6QjQp3o0LgD3bY",
+    authDomain: "unirutas-1724e.firebaseapp.com",
+    projectId: "unirutas-1724e",
+    storageBucket: "unirutas-1724e.firebasestorage.app",
+    messagingSenderId: "949060149395",
+    appId: "1:949060149395:web:994e170ead7e1b8bd42d66"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const badge = document.getElementById('auth-badge');
+  const btn = document.getElementById('btn-sembrar');
+  const msg = document.getElementById('msg');
+
+  const reportesSemilla = [
+    {
+      tipo: 'hueco',
+      descripcion: 'Hueco profundo en la ciclovía de la Cra 7. Varios ciclistas han caído. Necesita reparación urgente.',
+      lat: 4.6295, lng: -74.0655,
+      localidad: 'Teusaquillo'
+    },
+    {
+      tipo: 'inundacion',
+      descripcion: 'La Av. Calle 80 se inunda cada vez que llueve fuerte. El agua llega hasta los tobillos y los carros quedan atascados.',
+      lat: 4.6470, lng: -74.0800,
+      localidad: 'Los Mártires'
+    },
+    {
+      tipo: 'otro',
+      descripcion: 'Zona oscura y solitaria en la salida de TransMilenio Calle 26. Reportan atracos frecuentes en la mañana y noche.',
+      lat: 4.6150, lng: -74.0700,
+      localidad: 'Santa Fe'
+    }
+  ];
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      badge.textContent = '✅ Autenticado como ' + (user.email || user.uid);
+      badge.className = 'badge ready';
+      btn.disabled = false;
+    } else {
+      badge.textContent = '❌ No has iniciado sesión. Abre primero la app y luego recarga esta página.';
+      badge.className = 'badge error';
+      btn.disabled = true;
+    }
+  });
+
+  btn.addEventListener('click', async () => {
+    if (!auth.currentUser) return;
+    btn.disabled = true;
+    btn.textContent = '⏳ Generando...';
+    msg.className = 'msg';
+    msg.style.display = 'none';
+
+    const resultados = [];
+
+    for (const r of reportesSemilla) {
+      try {
+        await addDoc(collection(db, 'reportes'), {
+          tipo: r.tipo,
+          descripcion: r.descripcion,
+          fotoURL: '',
+          lat: r.lat,
+          lng: r.lng,
+          localidad: r.localidad,
+          autorUid: auth.currentUser.uid,
+          createdAt: serverTimestamp(),
+          votos: {},
+          score: 0,
+          resuelto: false
+        });
+        resultados.push(`✅ ${r.tipo} — ${r.localidad}`);
+      } catch (e) {
+        resultados.push(`❌ ${r.tipo} — ${e.message}`);
+      }
+    }
+
+    const errores = resultados.filter(r => r.startsWith('❌'));
+    if (errores.length === 0) {
+      msg.className = 'msg ok';
+      msg.innerHTML = '🎉 ¡Los 3 reportes se crearon correctamente! <br><small>Ya puedes cerrar esta página y recargar el mapa con <strong>#btn-reportes</strong> activado.</small>';
+    } else {
+      msg.className = 'msg err';
+      msg.innerHTML = resultados.join('<br>');
+    }
+    msg.style.display = 'block';
+
+    btn.textContent = '✅ Listo — generar de nuevo';
+    btn.disabled = false;
+  });
+</script>
+</body>
+</html>
