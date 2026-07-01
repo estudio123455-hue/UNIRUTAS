@@ -152,6 +152,59 @@
     .sos-btn:hover { transform: translateX(-50%) scale(1.08); box-shadow: 0 6px 24px rgba(220,38,38,0.55); }
     .sos-btn:active { transform: translateX(-50%) scale(0.95); }
 
+    /* Modal de advertencia SOS */
+    .sos-warning-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 190;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .sos-warning-overlay.visible { display: flex; }
+    .sos-warning-modal {
+      background: var(--blanco);
+      border-radius: 16px;
+      padding: 28px 24px 20px;
+      max-width: 340px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+      animation: warningIn 0.25s ease-out;
+    }
+    @keyframes warningIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    .sos-warning-icon { font-size: 3rem; margin-bottom: 8px; }
+    .sos-warning-modal h3 {
+      font-size: 1.2rem; font-weight: 700;
+      color: var(--gris-900); margin-bottom: 10px;
+    }
+    .sos-warning-modal p {
+      font-size: 0.88rem; color: var(--gris-600);
+      line-height: 1.55; margin-bottom: 20px;
+    }
+    .sos-warning-actions {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .sos-warning-actions .btn-call {
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px; padding: 11px 0; border-radius: 10px;
+      background: var(--verde); color: var(--blanco);
+      font-size: 14px; font-weight: 600; text-decoration: none;
+      border: none; cursor: pointer;
+    }
+    .sos-warning-actions .btn-call:active { opacity: 0.85; }
+    .sos-warning-actions .btn-close-warning {
+      padding: 10px 0; border-radius: 10px;
+      background: transparent; color: var(--gris-500);
+      font-size: 14px; font-weight: 500;
+      border: 1.5px solid var(--gris-200); cursor: pointer;
+    }
+    .sos-warning-actions .btn-close-warning:active { background: var(--gris-100); }
+
     /* Botón mi ubicación */
     .ubicacion-btn {
       position: fixed;
@@ -461,6 +514,19 @@
 <div class="bottom-sheet" id="bottom-sheet">
   <div class="sheet-handle"></div>
   <div id="sheet-content"></div>
+</div>
+
+<!-- SOS modal de advertencia -->
+<div class="sos-warning-overlay" id="sos-warning-modal">
+  <div class="sos-warning-modal">
+    <div class="sos-warning-icon">⚠️</div>
+    <h3>Función en desarrollo</h3>
+    <p>El botón SOS todavía no está conectado a servicios de emergencia. En caso de emergencia real, llama directamente al 123 o contacta a tus contactos de confianza.</p>
+    <div class="sos-warning-actions">
+      <a href="tel:123" class="btn-call">📞 Llamar al 123</a>
+      <button class="btn-close-warning" id="btn-cerrar-warning">Cerrar</button>
+    </div>
+  </div>
 </div>
 
 <!-- SOS overlay -->
@@ -1706,7 +1772,19 @@
   document.getElementById('btn-transmilenio').addEventListener('click', () => toggleCapa('transmilenio'));
   document.getElementById('btn-bici-park').addEventListener('click', () => toggleCapa('bici-park'));
   document.getElementById('btn-ubicacion').addEventListener('click', centrarUbicacion);
-  document.getElementById('btn-sos').addEventListener('click', iniciarSOS);
+  // Warning modal handlers
+  function mostrarWarningSOS() {
+    document.getElementById('sos-warning-modal').classList.add('visible');
+  }
+  function cerrarWarningSOS() {
+    document.getElementById('sos-warning-modal').classList.remove('visible');
+  }
+  document.getElementById('btn-sos').addEventListener('click', mostrarWarningSOS);
+  document.getElementById('btn-cerrar-warning').addEventListener('click', cerrarWarningSOS);
+  document.getElementById('sos-warning-modal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) cerrarWarningSOS();
+  });
+
   document.getElementById('btn-cancelar-sos').addEventListener('click', cancelarSOS);
   document.getElementById('btn-bien').addEventListener('click', cerrarSOSEnviado);
   document.getElementById('overlay').addEventListener('click', cerrarSheet);
